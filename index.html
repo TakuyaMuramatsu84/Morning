@@ -970,7 +970,7 @@ function getTasks(hasBath, dayData) {
 function fmtMin(m) {
   const h = Math.floor(m / 60);
   const min = m % 60;
-  return `${h}:${String(min).padStart(2,'0')}`;
+  return `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
 }
 
 // 今日か次の平日の表示日を決定
@@ -1075,6 +1075,10 @@ function renderSet() {
     </div>`;
   }).join('');
 
+  const targetData = schedule[targetDow];
+  const targetWake = customWake[targetDow] !== null ? customWake[targetDow] : targetData.wakeNoBath;
+  const targetWakeStr = fmtMin(targetWake);
+  const alarmUrl = `shortcuts://run-shortcut?name=${encodeURIComponent('アラームセット')}&input=${encodeURIComponent(targetWakeStr)}`;
   const clockUrl = `shortcuts://run-shortcut?name=${encodeURIComponent('時計を開く')}`;
 
   content.innerHTML = `
@@ -1089,8 +1093,11 @@ function renderSet() {
         リセットすると自動計算に戻ります。
       </div>
     </div>
+    <a class="alarm-btn animate-in" href="${alarmUrl}">
+      ⏰ 次の登校日のアラームをセット <span class="alarm-time">${targetWakeStr}</span>
+    </a>
     <a class="alarm-btn-clock animate-in" href="${clockUrl}">
-      🕐 時計アプリでアラームを設定する
+      🕐 時計アプリでアラームを確認・編集する
     </a>`;
 }
 
@@ -1421,7 +1428,7 @@ function renderMain() {
 
   const tasks = getTasks(bathOn, data);
   const totalMin = tasks.reduce((s,t) => s + t.min, 0);
-  const wake = bathOn ? data.wakeBath : data.wakeNoBath;
+  const wake = customWake[selectedDay] !== null ? customWake[selectedDay] : (bathOn ? data.wakeBath : data.wakeNoBath);
   const wakeStr = fmtMin(wake);
   const isRule830 = wake <= 8*60+30 && data.rule830Both;
 
