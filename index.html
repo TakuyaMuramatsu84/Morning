@@ -1,95 +1,67 @@
-function renderMain() {
-  const content = document.getElementById('mainContent');
-  const data = schedule[selectedDay];
-  const dayName = DAYS[selectedDay];
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a0f">
+<title>朝の予定</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --border: rgba(255,255,255,0.07);
+    --text: #e8e6f0;
+    --muted: #5a5870;
+    --accent-wake: #c084fc;
+    --accent-bath: #38bdf8;
+    --accent-warn: #fb923c;
+    --green: #4ade80;
+    --font-sans: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+    --font-mono: 'SF Mono', ui-monospace, monospace;
+  }
 
-  const now = new Date();
-  const displayIsToday = selectedDay === getTodayDow() && now.getHours() < 12;
-  const displayIsTomorrow = selectedDay === getDisplayDay() && !displayIsToday;
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-  let dayLabel = `${now.getFullYear()}年${now.getMonth()+1}月`;
-  document.getElementById('dateLabel').textContent = dayLabel + (displayIsToday ? ' — 今日' : displayIsTomorrow ? ' — 次の登校日' : '');
-  document.getElementById('dayDisplay').textContent = `${dayName}曜日`;
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding: env(safe-area-inset-top, 16px) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+    overflow-x: hidden;
+  }
 
-  const tasks = getTasks(bathOn, data);
-  const totalMin = tasks.reduce((s,t) => s + t.min, 0);
-  const wake = bathOn ? data.wakeBath : data.wakeNoBath;
-  const wakeStr = fmtMin(wake);
-  const isRule830 = wake <= 8*60+30 && data.rule830Both;
+  /* Noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
 
-  const noticeHtml = (data.note && data.isBus)
-    ? `<div class="notice show">⚠️ ${data.note}</div>`
-    : (data.note ? `<div class="notice show" style="background:rgba(192,132,252,0.07);border-color:rgba(192,132,252,0.2);color:#d8b4fe;">💡 ${data.note}</div>` : '');
+  .container {
+    position: relative;
+    z-index: 1;
+    padding: 20px 20px 32px;
+    flex: 1;
+    max-width: 430px;
+    margin: 0 auto;
+    width: 100%;
+  }
 
-  const barTotal = totalMin;
-  const segs = tasks.map(t => {
-    const pct = (t.min / barTotal * 100).toFixed(1);
-    return `<div class="bar-seg" style="width:${pct}%;background:${t.color};opacity:${t.color === '#334155' ? 0.5 : 0.85}"></div>`;
-  }).join('');
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+  }
 
-  const legendItems = tasks.map(t =>
-    `<div class="legend-item"><div class="legend-dot" style="background:${t.color}"></div>${t.name}</div>`
-  ).join('');
-
-  const taskRows = tasks.map(t =>
-    `<div class="task-row">
-      <div class="task-dot" style="background:${t.color}"></div>
-      <div class="task-name">${t.name}</div>
-      <div class="task-time">${t.min}分</div>
-    </div>`
-  ).join('');
-
-  // --- 修正箇所：ショートカットへ渡す時間を「08:30」などの24時間表記に強制する ---
-  const alarmH = String(Math.floor(wake / 60)).padStart(2, '0');
-  const alarmM = String(wake % 60).padStart(2, '0');
-  const alarmTime24 = `${alarmH}:${alarmM}`; // 例: "08:30"
-  const alarmUrl = `shortcuts://run-shortcut?name=${encodeURIComponent('アラームセット')}&input=text&text=${encodeURIComponent(alarmTime24)}`;
-  // -------------------------------------------------------------------
-
-  content.innerHTML = `
-    ${noticeHtml}
-
-    <div class="cards-row animate-in">
-      <div class="wake-card ${bathOn ? 'with-bath' : 'no-bath'}">
-        <div class="wake-label">起床時間</div>
-        <div class="wake-time ${isRule830 ? 'rule830' : ''}">${wakeStr}</div>
-        <div class="wake-sublabel">${isRule830 ? '8:30ルール適用' : (bathOn ? '風呂あり' : '風呂なし')}</div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:10px;">
-        <div class="info-card depart">
-          <div class="label">出発</div>
-          <div class="value">${data.depart ? fmtMin(data.depart) : '—'}</div>
-          <div class="sub">${data.event}</div>
-        </div>
-        <div class="info-card">
-          <div class="label">準備時間</div>
-          <div class="value">${totalMin}<span style="font-size:13px;color:var(--muted);font-family:var(--font-sans)">分</span></div>
-        </div>
-      </div>
-    </div>
-
-    <a class="alarm-btn animate-in" href="${alarmUrl}">
-      ⏰ アラームをセット <span class="alarm-time">${wakeStr}</span>
-    </a>
-
-    <div class="bath-toggle ${bathOn ? 'active' : ''} animate-in" id="bathToggle" onclick="toggleBath()">
-      <div class="toggle-icon">🚿</div>
-      <div class="toggle-text">
-        <div class="toggle-title">朝風呂する</div>
-        <div class="toggle-sub">+25分 (風呂15分+髪10分)</div>
-      </div>
-      <div class="toggle-switch"></div>
-    </div>
-
-    <div class="timeline animate-in">
-      <div class="timeline-label">タスク内訳 — 計${totalMin}分</div>
-      <div class="bar-track">${segs}</div>
-      <div class="bar-legend">${legendItems}</div>
-    </div>
-
-    <div class="tasks-section animate-in">
-      <div class="tasks-header">タスクリスト</div>
-      <div class="task-list">${taskRows}</div>
-    </div>
-  `;
-}
+  .header-left {}
