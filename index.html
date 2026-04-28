@@ -895,20 +895,118 @@ function render() {
 }
 
 // ===== NOW TAB =====
-function getNowTasks() {
+// 前回の描画状態を記憶して、変化があった部分だけDOMを更新する
+let _nowState = null; // 'holiday'|'before'|'active'|'done'
+let _nowCurIdx = -1;
+
+function calcNowData() {
   const dow = getTodayDow();
   const data = schedule[dow];
-  if (!data) return null;
-  return { tasks: getTasks(bathOn, data), data, dow };
+  if (!data) return { state: 'holiday' };
+
+  const tasks = getTasks(bathOn, data);
+  const wake = bathOn ? data.wakeBath : data.wakeNoBath;
+  const now = new Date();
+  const nowSec = now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds();
+  const nowMin = nowSec / 60;
+
+  let cursor = wake;
+  const timed = tasks.map(t => {
+    const start = cursor;
+    const end = cursor + t.min;
+    cursor = end;
+    return { ...t, start, end };
+  });
+  const totalEnd = timed[timed.length - 1].end;
+
+  if (nowMin < wake) {
+    return { state: 'before', wake, data, minsToWake: Math.ceil(wake - nowMin) };
+  }
+  if (nowMin >= totalEnd) {
+    return { state: 'done' };
+  }
+
+  let curIdx = timed.findIndex(t => nowMin >= t.start && nowMin < t.end);
+  if (curIdx < 0) curIdx = timed.length - 1;
+  const cur = timed[curIdx];
+  const next = timed[curIdx + 1] || null;
+
+  const endSec = cur.end * 60;
+  const remainSec = Math.max(0, endSec - nowSec);
+  const remainMin = Math.ceil(remainSec / 60);
+
+  const R = 32, C = 2 * Math.PI * R;
+  const taskElapsed = nowMin - cur.start;
+  const taskProg = Math.min(1, taskElapsed / cur.min);
+  const dashOffset = C * (1 - taskProg);
+
+  const totalRange = totalEnd - wake;
+  const overallPct = Math.min(100, ((nowMin - wake) / totalRange) * 100);
+  const departRemain = Math.max(0, Math.ceil(totalEnd - nowMin));
+  const urgColor = remainMin <= 2 ? '#f87171' : remainMin <= 5 ? '#fb923c' : cur.color;
+
+  return { state: 'active', cur, next, curIdx, timed, remainMin, dashOffset, overallPct,
+           departRemain, urgColor, wake, totalEnd, data, R, C };
+}
+
+function setTxt(id, val) {
+  const el = document.getElementById(id);
+  if (el && el.textContent !== String(val)) el.textContent = val;
+}
+function setStyle(id, prop, val) {
+  const el = document.getElementById(id);
+  if (el) el.style[prop] = val;
+}
+function setAttr(id, attr, val) {
+  const el = document.getElementById(id);
+  if (el && el.getAttribute(attr) !== String(val)) el.setAttribute(attr, val);
 }
 
 function renderNow() {
   const content = document.getElementById('mainContent');
-  const dow = getTodayDow();
-  const data = schedule[dow];
+  const d = calcNowData();
+  const now = new Date();
 
-  // 今日の曜日がスケジュールにない（土日）
-  if (!data) {
+  // ヘッダー
+  const dow = getTodayDow();
+  document.getElementById('dateLabel').textContent =
+    `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日`;
+  document.getElementById('dayDisplay').textContent = `${DAYS[dow]}曜日`;
+
+  // 状態が変わった or 現タスクが変わった → DOM全再構築
+  const needRebuild = d.state !== _nowState
+    || (d.state === 'active' && d.curIdx !== _nowCurIdx)
+    || (d.state === 'before' && _nowState !== 'before');
+
+  if (needRebuild) {
+    _nowState = d.state;
+    _nowCurIdx = d.state === 'active' ? d.curIdx : -1;
+    buildNowDOM(content, d);
+    return;
+  }
+
+  // 状態変化なし → 数値だけパッチ
+  if (d.state === 'before') {
+    setTxt('nowMinsToWake', d.minsToWake);
+    return;
+  }
+  if (d.state === 'active') {
+    const { remainMin, dashOffset, overallPct, departRemain, urgColor, C } = d;
+    setTxt('circMins', remainMin);
+    setStyle('circMins', 'color', urgColor);
+    setAttr('circProg', 'stroke', urgColor);
+    setAttr('circProg', 'stroke-dashoffset', dashOffset.toFixed(2));
+    setStyle('stripDone', 'width', overallPct.toFixed(2) + '%');
+    setStyle('stripCursor', 'left', overallPct.toFixed(2) + '%');
+    setTxt('departRemainVal', departRemain);
+    const departEl = document.getElementById('departRemainVal');
+    if (departEl) departEl.style.color = departRemain <= 10 ? 'var(--accent-warn)' : 'var(--text)';
+    setTxt('progressLabel', `全体の進捗 — あと${departRemain}分で出発`);
+  }
+}
+
+function buildNowDOM(content, d) {
+  if (d.state === 'holiday') {
     content.innerHTML = `
       <div class="now-state-card animate-in">
         <div class="now-state-icon">🌿</div>
@@ -918,39 +1016,15 @@ function renderNow() {
     return;
   }
 
-  const tasks = getTasks(bathOn, data);
-  const wake = bathOn ? data.wakeBath : data.wakeNoBath;
-  const now = new Date();
-  const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
-
-  // 各タスクの開始・終了時刻を計算
-  let cursor = wake;
-  const timed = tasks.map(t => {
-    const start = cursor;
-    const end = cursor + t.min;
-    cursor = end;
-    return { ...t, start, end };
-  });
-  const totalEnd = timed[timed.length - 1].end; // = depart時刻
-
-  // 状態判定
-  const started = nowMin >= wake;
-  const finished = nowMin >= totalEnd;
-
-  // ヘッダー更新
-  document.getElementById('dateLabel').textContent = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日`;
-  document.getElementById('dayDisplay').textContent = `${DAYS[dow]}曜日`;
-
-  if (!started) {
-    const minsToWake = Math.ceil(wake - nowMin);
+  if (d.state === 'before') {
     content.innerHTML = `
       <div class="now-state-card animate-in">
         <div class="now-state-icon">😴</div>
         <div class="now-state-title">まだ起床前</div>
-        <div class="now-state-sub">起床時刻まであと <strong style="color:var(--accent-wake)">${minsToWake}分</strong><br>（${fmtMin(wake)} 起床予定）</div>
+        <div class="now-state-sub">起床時刻まであと <strong id="nowMinsToWake" style="color:var(--accent-wake)">${d.minsToWake}</strong>分<br>（${fmtMin(d.wake)} 起床予定）</div>
       </div>
       <div style="margin-top:14px;">
-        <div class="bath-toggle ${bathOn ? 'active' : ''} animate-in" onclick="toggleBath()">
+        <div class="bath-toggle ${bathOn ? 'active' : ''}" onclick="toggleBath()">
           <div class="toggle-icon">🚿</div>
           <div class="toggle-text">
             <div class="toggle-title">朝風呂する</div>
@@ -962,7 +1036,7 @@ function renderNow() {
     return;
   }
 
-  if (finished) {
+  if (d.state === 'done') {
     content.innerHTML = `
       <div class="now-state-card animate-in">
         <div class="now-state-icon">✅</div>
@@ -972,33 +1046,10 @@ function renderNow() {
     return;
   }
 
-  // 現在のタスク
-  let curIdx = timed.findIndex(t => nowMin >= t.start && nowMin < t.end);
-  if (curIdx < 0) curIdx = timed.length - 1;
-  const cur = timed[curIdx];
-  const next = timed[curIdx + 1] || null;
+  // active
+  const { cur, next, curIdx, timed, remainMin, dashOffset, overallPct,
+          departRemain, urgColor, wake, totalEnd, data, R, C } = d;
 
-  // 現タスク残り秒
-  const endSec = cur.end * 60;
-  const nowSec = now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds();
-  const remainSec = Math.max(0, endSec - nowSec);
-  const remainMin = Math.ceil(remainSec / 60);
-
-  // 円プログレス
-  const taskElapsed = nowMin - cur.start;
-  const taskProg = Math.min(1, taskElapsed / cur.min);
-  const R = 32, C = 2 * Math.PI * R;
-  const dashOffset = C * (1 - taskProg);
-
-  // 全体進捗
-  const totalMin2 = totalEnd - wake;
-  const elapsedTotal = nowMin - wake;
-  const overallPct = Math.min(100, (elapsedTotal / totalMin2) * 100);
-
-  // depart残り
-  const departRemain = Math.max(0, Math.ceil(totalEnd - nowMin));
-
-  // タスクキュー
   const queueRows = timed.map((t, i) => {
     const state = i < curIdx ? 'done' : i === curIdx ? 'current' : '';
     const check = i < curIdx ? '✓' : i === curIdx ? '▶' : '';
@@ -1009,46 +1060,42 @@ function renderNow() {
     </div>`;
   }).join('');
 
-  // urgency color for circle
-  const urgColor = remainMin <= 2 ? '#f87171' : remainMin <= 5 ? '#fb923c' : cur.color;
-
   content.innerHTML = `
-    <div class="now-hero animate-in" style="--hero-color:${cur.color}">
-      <div class="now-hero" style="padding:0;border:none;background:none;overflow:visible;margin-bottom:0">
-        <div class="now-status-row">
-          <div class="now-pulse"></div>
-          <div class="now-status-text">進行中</div>
-        </div>
-        <div class="now-task-name" style="color:${cur.color}">${cur.name}</div>
-        <div class="now-task-sub">${fmtMin(cur.start)} → ${fmtMin(cur.end)}</div>
-        <div class="now-timer-wrap">
-          <div class="circle-wrap">
-            <svg width="80" height="80" viewBox="0 0 80 80">
-              <circle class="circle-bg" cx="40" cy="40" r="${R}"/>
-              <circle class="circle-prog" id="circProg"
-                cx="40" cy="40" r="${R}"
-                stroke="${urgColor}"
-                stroke-dasharray="${C}"
-                stroke-dashoffset="${dashOffset}"/>
-            </svg>
-            <div class="circle-label">
-              <div class="circle-mins" id="circMins" style="color:${urgColor}">${remainMin}</div>
-              <div class="circle-unit">分</div>
-            </div>
+    <div class="now-hero animate-in">
+      <div class="now-status-row">
+        <div class="now-pulse"></div>
+        <div class="now-status-text">進行中</div>
+      </div>
+      <div class="now-task-name" style="color:${cur.color}">${cur.name}</div>
+      <div class="now-task-sub">${fmtMin(cur.start)} → ${fmtMin(cur.end)}</div>
+      <div class="now-timer-wrap">
+        <div class="circle-wrap">
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <circle class="circle-bg" cx="40" cy="40" r="${R}"/>
+            <circle class="circle-prog" id="circProg"
+              cx="40" cy="40" r="${R}"
+              stroke="${urgColor}"
+              stroke-dasharray="${C}"
+              stroke-dashoffset="${dashOffset.toFixed(2)}"/>
+          </svg>
+          <div class="circle-label">
+            <div class="circle-mins" id="circMins" style="color:${urgColor}">${remainMin}</div>
+            <div class="circle-unit">分</div>
           </div>
-          <div class="now-time-details">
-            <div class="now-detail-row">
-              <span class="now-detail-label">終了予定</span>
-              <span class="now-detail-value">${fmtMin(cur.end)}</span>
-            </div>
-            <div class="now-detail-row">
-              <span class="now-detail-label">出発まで</span>
-              <span class="now-detail-value" style="color:${departRemain<=10?'var(--accent-warn)':'var(--text)'}">${departRemain}分</span>
-            </div>
-            <div class="now-detail-row">
-              <span class="now-detail-label">出発時刻</span>
-              <span class="now-detail-value" style="color:var(--accent-warn)">${data.depart ? fmtMin(data.depart) : '—'}</span>
-            </div>
+        </div>
+        <div class="now-time-details">
+          <div class="now-detail-row">
+            <span class="now-detail-label">終了予定</span>
+            <span class="now-detail-value">${fmtMin(cur.end)}</span>
+          </div>
+          <div class="now-detail-row">
+            <span class="now-detail-label">出発まで</span>
+            <span class="now-detail-value" id="departRemainVal"
+              style="color:${departRemain<=10?'var(--accent-warn)':'var(--text)'}">${departRemain}分</span>
+          </div>
+          <div class="now-detail-row">
+            <span class="now-detail-label">出発時刻</span>
+            <span class="now-detail-value" style="color:var(--accent-warn)">${data.depart ? fmtMin(data.depart) : '—'}</span>
           </div>
         </div>
       </div>
@@ -1065,10 +1112,10 @@ function renderNow() {
     </div>` : ''}
 
     <div class="now-progress-wrap animate-in">
-      <div class="now-progress-label">全体の進捗 — あと${departRemain}分で出発</div>
+      <div class="now-progress-label" id="progressLabel">全体の進捗 — あと${departRemain}分で出発</div>
       <div class="now-strip">
-        <div class="now-strip-done" id="stripDone" style="width:${overallPct}%"></div>
-        <div class="now-strip-cursor" id="stripCursor" style="left:${overallPct}%"></div>
+        <div class="now-strip-done" id="stripDone" style="width:${overallPct.toFixed(2)}%"></div>
+        <div class="now-strip-cursor" id="stripCursor" style="left:${overallPct.toFixed(2)}%"></div>
       </div>
       <div class="now-strip-labels">
         <span>${fmtMin(wake)} 起床</span>
@@ -1078,7 +1125,7 @@ function renderNow() {
 
     <div style="margin-bottom:10px;">
       <div class="tasks-header" style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-family:var(--font-mono);">タスク一覧</div>
-      <div class="now-queue animate-in">${queueRows}</div>
+      <div class="now-queue">${queueRows}</div>
     </div>
 
     <div class="bath-toggle ${bathOn ? 'active' : ''}" onclick="toggleBath()">
