@@ -2,7 +2,1252 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a0f">
+<title>朝の予定</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --border: rgba(255,255,255,0.07);
+    --text: #e8e6f0;
+    --muted: #5a5870;
+    --accent-wake: #c084fc;
+    --accent-bath: #38bdf8;
+    --accent-warn: #fb923c;
+    --green: #4ade80;
+    --font-sans: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+    --font-mono: 'SF Mono', ui-monospace, monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding: env(safe-area-inset-top, 16px) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+    overflow-x: hidden;
+  }
+
+  /* Noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    padding: 20px 20px 32px;
+    flex: 1;
+    max-width: 430px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+  }
+
+  .header-left {}
+
+  .date-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .day-display {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .clock {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--muted);
+    text-align: right;
+    line-height: 1.5;
+  }
+
+  .clock .time-now {
+    font-size: 18px;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* Wake card */
+  .wake-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .wake-card::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    opacity: 0.06;
+  }
+
+  .wake-card.no-bath::before { background: var(--accent-wake); }
+  .wake-card.with-bath::before { background: var(--accent-bath); }
+
+  .wake-label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+    font-family: var(--font-mono);
+  }
+
+  .wake-time {
+    font-family: var(--font-mono);
+    font-size: 52px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  .wake-card.no-bath .wake-time { color: var(--accent-wake); }
+  .wake-card.with-bath .wake-time { color: var(--accent-bath); }
+
+  .wake-time.rule830 {
+    color: var(--green) !important;
+  }
+
+  .wake-sublabel {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+    font-weight: 300;
+  }
+
+  .cards-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  /* Info card */
+  .info-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+  }
+
+  .info-card .label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-family: var(--font-mono);
+  }
+
+  .info-card .value {
+    font-family: var(--font-mono);
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .info-card .sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+    font-weight: 300;
+  }
+
+  .info-card.depart .value { color: var(--accent-warn); }
+
+  /* Bath toggle */
+  .bath-toggle {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    user-select: none;
+    transition: border-color 0.2s;
+  }
+
+  .bath-toggle:active { opacity: 0.8; }
+
+  .bath-toggle.active { border-color: rgba(56,189,248,0.4); }
+
+  .toggle-icon {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    background: rgba(255,255,255,0.04);
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+
+  .bath-toggle.active .toggle-icon { background: rgba(56,189,248,0.12); }
+
+  .toggle-text {}
+  .toggle-title {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .toggle-sub {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 300;
+  }
+
+  .toggle-switch {
+    margin-left: auto;
+    width: 44px; height: 26px;
+    background: var(--border);
+    border-radius: 13px;
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+
+  .bath-toggle.active .toggle-switch { background: var(--accent-bath); }
+
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 20px; height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  }
+
+  .bath-toggle.active .toggle-switch::after { transform: translateX(18px); }
+
+  /* Tasks */
+  .tasks-section {
+    margin-bottom: 8px;
+  }
+
+  .tasks-header {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    font-family: var(--font-mono);
+  }
+
+  .task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .task-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+
+  .task-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .task-name {
+    font-size: 13px;
+    font-weight: 400;
+    flex: 1;
+  }
+
+  .task-time {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* Timeline bar */
+  .timeline {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .timeline-label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    font-family: var(--font-mono);
+  }
+
+  .bar-track {
+    height: 10px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 6px;
+    display: flex;
+    overflow: hidden;
+    gap: 1px;
+  }
+
+  .bar-seg {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  .bar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    margin-top: 10px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .legend-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+  }
+
+  /* Day nav */
+  .day-nav {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .day-btn {
+    flex: 1;
+    padding: 8px 4px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--muted);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+
+  .day-btn.active {
+    border-color: var(--accent-wake);
+    color: var(--accent-wake);
+    background: rgba(192,132,252,0.06);
+  }
+
+  .day-btn.today-mark {
+    position: relative;
+  }
+
+  .day-btn.today-mark::after {
+    content: '';
+    position: absolute;
+    bottom: 4px; left: 50%;
+    transform: translateX(-50%);
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--accent-warn);
+  }
+
+  /* Notice */
+  .notice {
+    background: rgba(251,146,60,0.08);
+    border: 1px solid rgba(251,146,60,0.2);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: #fdba74;
+    line-height: 1.6;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  .notice.show { display: block; }
+
+  /* Holiday */
+  .holiday-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 24px;
+    text-align: center;
+  }
+
+  .holiday-icon { font-size: 40px; margin-bottom: 12px; }
+  .holiday-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  .holiday-sub { font-size: 13px; color: var(--muted); font-weight: 300; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-in { animation: fadeIn 0.35s ease forwards; }
+
+  /* ===== NOW TAB ===== */
+  .view-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 4px;
+    border: 1px solid var(--border);
+  }
+  .view-tab {
+    flex: 1;
+    padding: 9px 6px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.18s;
+    font-weight: 500;
+  }
+  .view-tab.active {
+    background: rgba(192,132,252,0.15);
+    color: var(--accent-wake);
+  }
+
+  /* NOW: current task hero */
+  .now-hero {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 24px;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .now-hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    opacity: 0.05;
+    transition: background 0.4s;
+  }
+  .now-status-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .now-pulse {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 0 0 rgba(74,222,128,0.4);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(74,222,128,0.4); }
+    70% { box-shadow: 0 0 0 8px rgba(74,222,128,0); }
+    100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+  }
+  .now-status-text {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--green);
+    text-transform: uppercase;
+  }
+  .now-task-name {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+    line-height: 1.1;
+  }
+  .now-task-sub {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 300;
+    margin-bottom: 20px;
+  }
+
+  /* circular timer */
+  .now-timer-wrap {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .circle-wrap {
+    position: relative;
+    width: 80px; height: 80px;
+    flex-shrink: 0;
+  }
+  .circle-bg {
+    fill: none;
+    stroke: rgba(255,255,255,0.06);
+    stroke-width: 5;
+  }
+  .circle-prog {
+    fill: none;
+    stroke-width: 5;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: center;
+    transition: stroke-dashoffset 1s linear, stroke 0.4s;
+  }
+  .circle-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .circle-mins {
+    font-family: var(--font-mono);
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1;
+  }
+  .circle-unit {
+    font-size: 9px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .now-time-details {
+    flex: 1;
+  }
+  .now-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .now-detail-row:last-child { border-bottom: none; }
+  .now-detail-label { font-size: 11px; color: var(--muted); }
+  .now-detail-value {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* next task card */
+  .now-next {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 14px 18px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .now-next-arrow {
+    font-size: 18px;
+    color: var(--muted);
+  }
+  .now-next-info { flex: 1; }
+  .now-next-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    margin-bottom: 3px;
+  }
+  .now-next-name {
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .now-next-time {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* progress strip */
+  .now-progress-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+  .now-progress-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    margin-bottom: 12px;
+  }
+  .now-strip {
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.05);
+    position: relative;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .now-strip-done {
+    height: 100%;
+    border-radius: 4px 0 0 4px;
+    background: linear-gradient(90deg, #4ade80, #38bdf8);
+    transition: width 1s linear;
+  }
+  .now-strip-cursor {
+    position: absolute;
+    top: -3px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 6px rgba(255,255,255,0.5);
+    transform: translateX(-50%);
+    transition: left 1s linear;
+  }
+  .now-strip-labels {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* all-done / not-started states */
+  .now-state-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 48px 24px;
+    text-align: center;
+  }
+  .now-state-icon { font-size: 44px; margin-bottom: 14px; }
+  .now-state-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  .now-state-sub { font-size: 13px; color: var(--muted); font-weight: 300; line-height: 1.6; }
+
+  /* task queue list */
+  .now-queue {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .now-queue-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    transition: opacity 0.3s;
+  }
+  .now-queue-row.done {
+    opacity: 0.35;
+  }
+  .now-queue-row.current {
+    border-color: rgba(192,132,252,0.35);
+    background: rgba(192,132,252,0.05);
+  }
+  .now-queue-check {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .now-queue-row.done .now-queue-check {
+    background: var(--green);
+    border-color: var(--green);
+    color: #000;
+  }
+  .now-queue-row.current .now-queue-check {
+    border-color: var(--accent-wake);
+    background: rgba(192,132,252,0.2);
+  }
+  .now-queue-name { flex: 1; font-size: 13px; }
+  .now-queue-dur {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-left">
+      <div class="date-label" id="dateLabel"></div>
+      <div class="day-display" id="dayDisplay"></div>
+    </div>
+    <div class="clock">
+      <div class="time-now" id="clockEl"></div>
+      <div id="nextChangeLabel" style="font-size:10px;margin-top:2px;"></div>
+    </div>
+  </div>
+
+  <!-- View tabs: いまここ / 曜日 -->
+  <div class="view-tabs">
+    <button class="view-tab" id="tabNow" onclick="switchView('now')">⏱ いまここ</button>
+    <button class="view-tab active" id="tabDay" onclick="switchView('day')">📅 曜日別</button>
+  </div>
+
+  <!-- Day nav (曜日別のみ表示) -->
+  <div class="day-nav" id="dayNav"></div>
+
+  <!-- Main content -->
+  <div id="mainContent"></div>
+</div>
+
+<script>
+// スケジュールデータ
+// wakeNoBath: 風呂なし起床時間 (分で表現, 0=0:00)
+// wakeBath:   風呂あり起床時間
+// depart:     出発時刻
+// class:      授業/バス
+// note:       注意メモ
+// rule830:    8:30ルール適用かどうか
+
+const DAYS = ['日','月','火','水','木','金','土'];
+
+// 起床時間計算:
+// 風呂なし: 朝食10+弁当(曜日次第)+服5+身だしなみ10+荷物5+余裕(曜日次第) = 合計
+// 風呂あり: 朝食10+弁当(曜日次第)+風呂15+髪10+服5+荷物5+余裕(曜日次第) = 合計
+// 月: 弁当10, 余裕10 / なし=40→8:30ルール / あり=55→8:30ルール (depart 12:44)
+// 火: 弁当10, 余裕10 / なし=40→depart8:34→wake7:54 / あり=55→wake7:39 (depart 8:34)
+// 水: 弁当10, 余裕10 / なし=40→8:30ルール / あり=55→8:30ルール (depart 10:14)
+// 木: 弁当なし, 余裕10 / なし=30→8:30ルール / あり=45→8:30ルール (no depart)
+// 金: 弁当5, 余裕5 / なし=30→depart7:30→wake7:00 / あり=45→wake6:45 (depart 7:30, bus 7:45)
+
+const schedule = {
+  1: { // 月
+    wakeNoBath: 8*60+30, wakeBath: 8*60+30,
+    depart: 12*60+44, event: '13:00 授業',
+    rule830Both: true,
+    bentMin: 10, bufferMin: 10,
+    note: '余裕たっぷり。朝の時間を有効活用しよう。'
+  },
+  2: { // 火
+    wakeNoBath: 7*60+54, wakeBath: 7*60+39,
+    depart: 8*60+34, event: '8:50 授業',
+    rule830Both: false,
+    bentMin: 10, bufferMin: 10,
+    note: '月曜に入浴済みなら風呂なしで7:54起き。'
+  },
+  3: { // 水
+    wakeNoBath: 8*60+30, wakeBath: 8*60+30,
+    depart: 10*60+14, event: '10:30 授業',
+    rule830Both: true,
+    bentMin: 10, bufferMin: 10,
+    note: null
+  },
+  4: { // 木
+    wakeNoBath: 8*60+30, wakeBath: 8*60+30,
+    depart: null, event: '授業なし',
+    rule830Both: true,
+    bentMin: 0, bufferMin: 10,
+    noSchool: true,
+    note: '金曜に備えて今夜はお風呂に入ろう。'
+  },
+  5: { // 金
+    wakeNoBath: 7*60+0, wakeBath: 6*60+45,
+    depart: 7*60+30, event: '7:45 バス',
+    rule830Both: false,
+    bentMin: 5, bufferMin: 5,
+    isBus: true,
+    note: '木曜に入浴済みなら風呂なしで7:00起き。バスは乗り遅れ厳禁！出発7:30厳守。'
+  }
+};
+
+// タスク定義 — 風呂ありは風呂→髪→服の順
+function getTasks(hasBath, dayData) {
+  const bento = dayData.bentMin;
+  const buffer = dayData.bufferMin;
+  const tasks = [];
+  tasks.push({ name: '朝ごはん', min: 10, color: '#4ade80' });
+  if (bento > 0) tasks.push({ name: 'お弁当の準備', min: bento, color: '#6ee7b7' });
+  if (hasBath) {
+    tasks.push({ name: 'お風呂', min: 15, color: '#38bdf8' });
+    tasks.push({ name: '髪を乾かす・セット', min: 10, color: '#7dd3fc' });
+    tasks.push({ name: '服を選ぶ・着る', min: 5, color: '#a5b4fc' });
+  } else {
+    tasks.push({ name: '服を選ぶ・着る', min: 5, color: '#a5b4fc' });
+    tasks.push({ name: '身だしなみ・髪セット', min: 10, color: '#7dd3fc' });
+  }
+  tasks.push({ name: '荷物をまとめる', min: 5, color: '#fcd34d' });
+  tasks.push({ name: '余裕', min: buffer, color: '#334155' });
+  return tasks;
+}
+
+function fmtMin(m) {
+  const h = Math.floor(m / 60);
+  const min = m % 60;
+  return `${h}:${String(min).padStart(2,'0')}`;
+}
+
+// 今日か次の平日の表示日を決定
+function getDisplayDay() {
+  const now = new Date();
+  const dow = now.getDay(); // 0=日
+  const hour = now.getHours();
+
+  // 今日が平日 && 12:00前 → 今日
+  // 今日が平日 && 12:00以降 → 翌平日
+  // 今日が土日 → 次の月曜
+
+  let target = dow;
+
+  const isWeekday = (d) => d >= 1 && d <= 5;
+
+  if (isWeekday(target)) {
+    if (hour >= 12) {
+      // 翌平日
+      target = target === 5 ? 1 : target + 1;
+      // 木曜は休みなので金曜へ（月→火は普通）
+      if (target === 4) target = 5;
+    }
+  } else {
+    // 土→月, 日→月
+    target = 1;
+  }
+
+  return target;
+}
+
+// 今日の曜日インデックス
+function getTodayDow() {
+  return new Date().getDay();
+}
+
+let selectedDay = getDisplayDay();
+let bathOn = false;
+let currentView = 'day'; // 'day' | 'now'
+
+function switchView(v) {
+  currentView = v;
+  document.getElementById('tabNow').classList.toggle('active', v === 'now');
+  document.getElementById('tabDay').classList.toggle('active', v === 'day');
+  document.getElementById('dayNav').style.display = v === 'day' ? 'flex' : 'none';
+  render();
+}
+
+function render() {
+  if (currentView === 'now') {
+    renderNow();
+  } else {
+    renderDayNav();
+    renderMain();
+  }
+  updateClock();
+}
+
+// ===== NOW TAB =====
+function getNowTasks() {
+  const dow = getTodayDow();
+  const data = schedule[dow];
+  if (!data) return null;
+  return { tasks: getTasks(bathOn, data), data, dow };
+}
+
+function renderNow() {
+  const content = document.getElementById('mainContent');
+  const dow = getTodayDow();
+  const data = schedule[dow];
+
+  // 今日の曜日がスケジュールにない（土日）
+  if (!data) {
+    content.innerHTML = `
+      <div class="now-state-card animate-in">
+        <div class="now-state-icon">🌿</div>
+        <div class="now-state-title">今日は休日</div>
+        <div class="now-state-sub">ゆっくり過ごしてください。</div>
+      </div>`;
+    return;
+  }
+
+  const tasks = getTasks(bathOn, data);
+  const wake = bathOn ? data.wakeBath : data.wakeNoBath;
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+
+  // 各タスクの開始・終了時刻を計算
+  let cursor = wake;
+  const timed = tasks.map(t => {
+    const start = cursor;
+    const end = cursor + t.min;
+    cursor = end;
+    return { ...t, start, end };
+  });
+  const totalEnd = timed[timed.length - 1].end; // = depart時刻
+
+  // 状態判定
+  const started = nowMin >= wake;
+  const finished = nowMin >= totalEnd;
+
+  // ヘッダー更新
+  document.getElementById('dateLabel').textContent = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日`;
+  document.getElementById('dayDisplay').textContent = `${DAYS[dow]}曜日`;
+
+  if (!started) {
+    const minsToWake = Math.ceil(wake - nowMin);
+    content.innerHTML = `
+      <div class="now-state-card animate-in">
+        <div class="now-state-icon">😴</div>
+        <div class="now-state-title">まだ起床前</div>
+        <div class="now-state-sub">起床時刻まであと <strong style="color:var(--accent-wake)">${minsToWake}分</strong><br>（${fmtMin(wake)} 起床予定）</div>
+      </div>
+      <div style="margin-top:14px;">
+        <div class="bath-toggle ${bathOn ? 'active' : ''} animate-in" onclick="toggleBath()">
+          <div class="toggle-icon">🚿</div>
+          <div class="toggle-text">
+            <div class="toggle-title">朝風呂する</div>
+            <div class="toggle-sub">+25分 (風呂15分+髪10分)</div>
+          </div>
+          <div class="toggle-switch"></div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  if (finished) {
+    content.innerHTML = `
+      <div class="now-state-card animate-in">
+        <div class="now-state-icon">✅</div>
+        <div class="now-state-title">準備完了！</div>
+        <div class="now-state-sub">すべてのタスクが終わりました。<br>行ってらっしゃい！</div>
+      </div>`;
+    return;
+  }
+
+  // 現在のタスク
+  let curIdx = timed.findIndex(t => nowMin >= t.start && nowMin < t.end);
+  if (curIdx < 0) curIdx = timed.length - 1;
+  const cur = timed[curIdx];
+  const next = timed[curIdx + 1] || null;
+
+  // 現タスク残り秒
+  const endSec = cur.end * 60;
+  const nowSec = now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds();
+  const remainSec = Math.max(0, endSec - nowSec);
+  const remainMin = Math.ceil(remainSec / 60);
+
+  // 円プログレス
+  const taskElapsed = nowMin - cur.start;
+  const taskProg = Math.min(1, taskElapsed / cur.min);
+  const R = 32, C = 2 * Math.PI * R;
+  const dashOffset = C * (1 - taskProg);
+
+  // 全体進捗
+  const totalMin2 = totalEnd - wake;
+  const elapsedTotal = nowMin - wake;
+  const overallPct = Math.min(100, (elapsedTotal / totalMin2) * 100);
+
+  // depart残り
+  const departRemain = Math.max(0, Math.ceil(totalEnd - nowMin));
+
+  // タスクキュー
+  const queueRows = timed.map((t, i) => {
+    const state = i < curIdx ? 'done' : i === curIdx ? 'current' : '';
+    const check = i < curIdx ? '✓' : i === curIdx ? '▶' : '';
+    return `<div class="now-queue-row ${state}">
+      <div class="now-queue-check">${check}</div>
+      <div class="now-queue-name">${t.name}</div>
+      <div class="now-queue-dur">${t.min}分</div>
+    </div>`;
+  }).join('');
+
+  // urgency color for circle
+  const urgColor = remainMin <= 2 ? '#f87171' : remainMin <= 5 ? '#fb923c' : cur.color;
+
+  content.innerHTML = `
+    <div class="now-hero animate-in" style="--hero-color:${cur.color}">
+      <div class="now-hero" style="padding:0;border:none;background:none;overflow:visible;margin-bottom:0">
+        <div class="now-status-row">
+          <div class="now-pulse"></div>
+          <div class="now-status-text">進行中</div>
+        </div>
+        <div class="now-task-name" style="color:${cur.color}">${cur.name}</div>
+        <div class="now-task-sub">${fmtMin(cur.start)} → ${fmtMin(cur.end)}</div>
+        <div class="now-timer-wrap">
+          <div class="circle-wrap">
+            <svg width="80" height="80" viewBox="0 0 80 80">
+              <circle class="circle-bg" cx="40" cy="40" r="${R}"/>
+              <circle class="circle-prog" id="circProg"
+                cx="40" cy="40" r="${R}"
+                stroke="${urgColor}"
+                stroke-dasharray="${C}"
+                stroke-dashoffset="${dashOffset}"/>
+            </svg>
+            <div class="circle-label">
+              <div class="circle-mins" id="circMins" style="color:${urgColor}">${remainMin}</div>
+              <div class="circle-unit">分</div>
+            </div>
+          </div>
+          <div class="now-time-details">
+            <div class="now-detail-row">
+              <span class="now-detail-label">終了予定</span>
+              <span class="now-detail-value">${fmtMin(cur.end)}</span>
+            </div>
+            <div class="now-detail-row">
+              <span class="now-detail-label">出発まで</span>
+              <span class="now-detail-value" style="color:${departRemain<=10?'var(--accent-warn)':'var(--text)'}">${departRemain}分</span>
+            </div>
+            <div class="now-detail-row">
+              <span class="now-detail-label">出発時刻</span>
+              <span class="now-detail-value" style="color:var(--accent-warn)">${data.depart ? fmtMin(data.depart) : '—'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    ${next ? `
+    <div class="now-next animate-in">
+      <div class="now-next-arrow">→</div>
+      <div class="now-next-info">
+        <div class="now-next-label">次のタスク</div>
+        <div class="now-next-name" style="color:${next.color}">${next.name}</div>
+      </div>
+      <div class="now-next-time">${next.min}分</div>
+    </div>` : ''}
+
+    <div class="now-progress-wrap animate-in">
+      <div class="now-progress-label">全体の進捗 — あと${departRemain}分で出発</div>
+      <div class="now-strip">
+        <div class="now-strip-done" id="stripDone" style="width:${overallPct}%"></div>
+        <div class="now-strip-cursor" id="stripCursor" style="left:${overallPct}%"></div>
+      </div>
+      <div class="now-strip-labels">
+        <span>${fmtMin(wake)} 起床</span>
+        <span>${fmtMin(totalEnd)} 出発</span>
+      </div>
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <div class="tasks-header" style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-family:var(--font-mono);">タスク一覧</div>
+      <div class="now-queue animate-in">${queueRows}</div>
+    </div>
+
+    <div class="bath-toggle ${bathOn ? 'active' : ''}" onclick="toggleBath()">
+      <div class="toggle-icon">🚿</div>
+      <div class="toggle-text">
+        <div class="toggle-title">朝風呂する</div>
+        <div class="toggle-sub">+25分 (風呂15分+髪10分)</div>
+      </div>
+      <div class="toggle-switch"></div>
+    </div>
+  `;
+}
+
+function renderDayNav() {
+  const nav = document.getElementById('dayNav');
+  const today = getTodayDow();
+  nav.innerHTML = '';
+  [1,2,3,4,5].forEach(d => {
+    const btn = document.createElement('button');
+    btn.className = 'day-btn' + (d === selectedDay ? ' active' : '') + (d === today ? ' today-mark' : '');
+    btn.textContent = DAYS[d];
+    btn.onclick = () => { selectedDay = d; render(); };
+    nav.appendChild(btn);
+  });
+}
+
+function renderMain() {
+  const content = document.getElementById('mainContent');
+  const data = schedule[selectedDay];
+  const dayName = DAYS[selectedDay];
+
+  // date header
+  const now = new Date();
+  const displayIsToday = selectedDay === getTodayDow() && now.getHours() < 12;
+  const displayIsTomorrow = selectedDay === getDisplayDay() && !displayIsToday;
+
+  let dayLabel = `${now.getFullYear()}年${now.getMonth()+1}月`;
+  document.getElementById('dateLabel').textContent = dayLabel + (displayIsToday ? ' — 今日' : displayIsTomorrow ? ' — 次の登校日' : '');
+  document.getElementById('dayDisplay').textContent = `${dayName}曜日`;
+
+  const tasks = getTasks(bathOn, data);
+  const totalMin = tasks.reduce((s,t) => s + t.min, 0);
+  const wake = bathOn ? data.wakeBath : data.wakeNoBath;
+  const wakeStr = fmtMin(wake);
+  const isRule830 = wake <= 8*60+30 && data.rule830Both;
+
+  const noticeHtml = (data.note && data.isBus)
+    ? `<div class="notice show">⚠️ ${data.note}</div>`
+    : (data.note ? `<div class="notice show" style="background:rgba(192,132,252,0.07);border-color:rgba(192,132,252,0.2);color:#d8b4fe;">💡 ${data.note}</div>` : '');
+
+  // bar segments
+  const barTotal = totalMin;
+  const segs = tasks.map(t => {
+    const pct = (t.min / barTotal * 100).toFixed(1);
+    return `<div class="bar-seg" style="width:${pct}%;background:${t.color};opacity:${t.color === '#334155' ? 0.5 : 0.85}"></div>`;
+  }).join('');
+
+  const legendItems = tasks.map(t =>
+    `<div class="legend-item"><div class="legend-dot" style="background:${t.color}"></div>${t.name}</div>`
+  ).join('');
+
+  const taskRows = tasks.map(t =>
+    `<div class="task-row">
+      <div class="task-dot" style="background:${t.color}"></div>
+      <div class="task-name">${t.name}</div>
+      <div class="task-time">${t.min}分</div>
+    </div>`
+  ).join('');
+
+  content.innerHTML = `
+    ${noticeHtml}
+
+    <div class="cards-row animate-in">
+      <div class="wake-card ${bathOn ? 'with-bath' : 'no-bath'}">
+        <div class="wake-label">起床時間</div>
+        <div class="wake-time ${isRule830 ? 'rule830' : ''}">${wakeStr}</div>
+        <div class="wake-sublabel">${isRule830 ? '8:30ルール適用' : (bathOn ? '風呂あり' : '風呂なし')}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="info-card depart">
+          <div class="label">出発</div>
+          <div class="value">${data.depart ? fmtMin(data.depart) : '—'}</div>
+          <div class="sub">${data.event}</div>
+        </div>
+        <div class="info-card">
+          <div class="label">準備時間</div>
+          <div class="value">${totalMin}<span style="font-size:13px;color:var(--muted);font-family:var(--font-sans)">分</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bath-toggle ${bathOn ? 'active' : ''} animate-in" id="bathToggle" onclick="toggleBath()">
+      <div class="toggle-icon">🚿</div>
+      <div class="toggle-text">
+        <div class="toggle-title">朝風呂する</div>
+        <div class="toggle-sub">+25分 (風呂15分+髪10分)</div>
+      </div>
+      <div class="toggle-switch"></div>
+    </div>
+
+    <div class="timeline animate-in">
+      <div class="timeline-label">タスク内訳 — 計${totalMin}分</div>
+      <div class="bar-track">${segs}</div>
+      <div class="bar-legend">${legendItems}</div>
+    </div>
+
+    <div class="tasks-section animate-in">
+      <div class="tasks-header">タスクリスト</div>
+      <div class="task-list">${taskRows}</div>
+    </div>
+  `;
+}
+
+function toggleBath() {
+  bathOn = !bathOn;
+  renderMain();
+}
+
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clockEl').textContent = `${h}:${m}:${s}`;
+
+  // 次の切り替えまでの時間
+  const isAM = now.getHours() < 12;
+  const label = document.getElementById('nextChangeLabel');
+  if (isAM) {
+    const minsLeft = (12*60) - (now.getHours()*60 + now.getMinutes());
+    if (minsLeft < 60) {
+      label.textContent = `${minsLeft}分後に翌日表示へ`;
+      label.style.color = 'var(--accent-warn)';
+    } else {
+      label.textContent = '';
+    }
+  } else {
+    label.textContent = '翌日モード';
+    label.style.color = 'var(--muted)';
+  }
+}
+
+// 初期化 — デフォルトを「いまここ」タブに
+currentView = 'now';
+document.getElementById('tabNow').classList.add('active');
+document.getElementById('tabDay').classList.remove('active');
+document.getElementById('dayNav').style.display = 'none';
+render();
+
+setInterval(() => {
+  updateClock();
+  if (currentView === 'now') {
+    renderNow(); // 毎秒リアルタイム更新
+  }
+  // 毎分チェック: 12:00になったらリフレッシュ
+  const now = new Date();
+  if (now.getHours() === 12 && now.getMinutes() === 0 && now.getSeconds() === 0) {
+    selectedDay = getDisplayDay();
+    if (currentView === 'day') render();
+  }
+}, 1000);
+</script>
+</body>
+</html>
+0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0a0a0f">
