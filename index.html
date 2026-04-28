@@ -39,8 +39,12 @@ function renderMain() {
     </div>`
   ).join('');
 
-  const alarmTime = fmtMin(wake);
-  const alarmUrl = `shortcuts://run-shortcut?name=${encodeURIComponent('アラームセット')}&input=text&text=${encodeURIComponent(alarmTime)}`;
+  // --- 修正箇所：ショートカットへ渡す時間を「08:30」などの24時間表記に強制する ---
+  const alarmH = String(Math.floor(wake / 60)).padStart(2, '0');
+  const alarmM = String(wake % 60).padStart(2, '0');
+  const alarmTime24 = `${alarmH}:${alarmM}`; // 例: "08:30"
+  const alarmUrl = `shortcuts://run-shortcut?name=${encodeURIComponent('アラームセット')}&input=text&text=${encodeURIComponent(alarmTime24)}`;
+  // -------------------------------------------------------------------
 
   content.innerHTML = `
     ${noticeHtml}
@@ -65,7 +69,7 @@ function renderMain() {
     </div>
 
     <a class="alarm-btn animate-in" href="${alarmUrl}">
-      ⏰ アラームをセット <span class="alarm-time">${alarmTime}</span>
+      ⏰ アラームをセット <span class="alarm-time">${wakeStr}</span>
     </a>
 
     <div class="bath-toggle ${bathOn ? 'active' : ''} animate-in" id="bathToggle" onclick="toggleBath()">
