@@ -469,6 +469,39 @@
   }
   .alarm-btn-clock:active { opacity: 0.7; transform: scale(0.98); }
 
+  /* ===== WEATHER CARD ===== */
+  .weather-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .weather-icon { font-size: 32px; flex-shrink: 0; line-height: 1; }
+  .weather-info { flex: 1; min-width: 0; }
+  .weather-label {
+    font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); font-family: var(--font-mono); margin-bottom: 3px;
+  }
+  .weather-main {
+    font-size: 15px; font-weight: 600; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  .weather-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .weather-temp {
+    font-family: var(--font-mono); font-size: 22px; font-weight: 500;
+    color: var(--text); flex-shrink: 0; text-align: right;
+  }
+  .weather-temp span { font-size: 13px; color: var(--muted); }
+  .weather-umbrella {
+    background: rgba(56,189,248,0.08);
+    border-color: rgba(56,189,248,0.25);
+  }
+  .weather-umbrella .weather-main { color: var(--accent-bath); }
+
   /* ===== SET TAB ===== */
   .set-section { margin-bottom: 16px; }
   .set-section-title {
@@ -1051,6 +1084,88 @@ function render() {
   updateClock();
 }
 
+// ===== WEATHER =====
+let _weather = null; // { icon, desc, tempMax, tempMin, precip, isUmbrella, dateLabel }
+let _weatherFetched = false;
+
+const WMO = {
+  0:'☀️', 1:'🌤️', 2:'⛅', 3:'☁️',
+  45:'🌫️', 48:'🌫️',
+  51:'🌦️', 53:'🌦️', 55:'🌧️',
+  61:'🌧️', 63:'🌧️', 65:'🌧️',
+  71:'🌨️', 73:'🌨️', 75:'🌨️',
+  80:'🌦️', 81:'🌧️', 82:'⛈️',
+  95:'⛈️', 96:'⛈️', 99:'⛈️'
+};
+const WMO_DESC = {
+  0:'快晴', 1:'ほぼ晴れ', 2:'一部曇り', 3:'曇り',
+  45:'霧', 48:'霧',
+  51:'小雨', 53:'雨', 55:'強雨',
+  61:'小雨', 63:'雨', 65:'強雨',
+  71:'小雪', 73:'雪', 75:'大雪',
+  80:'にわか雨', 81:'雨', 82:'激しい雨',
+  95:'雷雨', 96:'雷雨', 99:'激しい雷雨'
+};
+
+async function fetchWeather() {
+  if (_weatherFetched) return;
+  _weatherFetched = true;
+  try {
+    const pos = await new Promise((res, rej) =>
+      navigator.geolocation.getCurrentPosition(res, rej, { timeout: 8000 })
+    );
+    const { latitude: lat, longitude: lon } = pos.coords;
+    // 今日＋明日の2日分取得
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`
+      + `&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum`
+      + `&timezone=Asia%2FTokyo&forecast_days=2`;
+    const res = await fetch(url);
+    const d = await res.json();
+    const now = new Date();
+    const idx = now.getHours() >= 12 ? 1 : 0; // 12時以降は翌日
+    const code = d.daily.weathercode[idx];
+    const tMax = Math.round(d.daily.temperature_2m_max[idx]);
+    const tMin = Math.round(d.daily.temperature_2m_min[idx]);
+    const precip = d.daily.precipitation_sum[idx];
+    const isUmbrella = precip >= 1 || [51,53,55,61,63,65,80,81,82,95,96,99].includes(code);
+    _weather = {
+      icon: WMO[code] || '🌡️',
+      desc: WMO_DESC[code] || '—',
+      tempMax: tMax, tempMin: tMin,
+      precip: precip.toFixed(1),
+      isUmbrella,
+      dateLabel: idx === 0 ? '今日の天気' : '明日の天気'
+    };
+    // 表示中のタブがdayなら再描画
+    if (currentView === 'day') { renderDayNav(); renderMain(); }
+  } catch(e) {
+    _weather = { error: true };
+  }
+}
+
+function getWeatherHtml() {
+  if (!_weather) return `<div class="weather-card animate-in"><div class="weather-icon">🌡️</div><div class="weather-info"><div class="weather-label">天気を取得中…</div><div class="weather-main" style="color:var(--muted)">位置情報を許可してください</div></div></div>`;
+  if (_weather.error) return '';
+  // 12時またぎで表示日が変わるのでラベルも動的に更新
+  const now = new Date();
+  const idx = now.getHours() >= 12 ? 1 : 0;
+  const label = idx === 0 ? '今日の天気' : '明日の天気';
+  const umbrella = _weather.isUmbrella ? '☂️ 傘を忘れずに！' : '';
+  return `
+    <div class="weather-card ${_weather.isUmbrella ? 'weather-umbrella' : ''} animate-in">
+      <div class="weather-icon">${_weather.icon}</div>
+      <div class="weather-info">
+        <div class="weather-label">${label}</div>
+        <div class="weather-main">${_weather.desc}${umbrella ? ' — ' + umbrella : ''}</div>
+        <div class="weather-sub">降水量 ${_weather.precip}mm</div>
+      </div>
+      <div class="weather-temp">${_weather.tempMax}°<span>/${_weather.tempMin}°</span></div>
+    </div>`;
+}
+
+// ページ読み込み時に天気取得開始
+fetchWeather();
+
 // ===== SET TAB =====
 function renderSet() {
   const content = document.getElementById('mainContent');
@@ -1097,9 +1212,6 @@ function renderSet() {
         リセットすると自動計算に戻ります。
       </div>
     </div>
-    <a class="alarm-btn animate-in" href="${alarmUrl}">
-      ⏰ 次の登校日のアラームをセット <span class="alarm-time">${targetWakeStr}</span>
-    </a>
     <a class="alarm-btn-clock animate-in" href="${clockUrl}">
       🕐 時計アプリでアラームを確認・編集する
     </a>`;
@@ -1464,6 +1576,7 @@ function renderMain() {
 
   content.innerHTML = `
     ${noticeHtml}
+    ${getWeatherHtml()}
 
     <div class="cards-row animate-in">
       <div class="wake-card ${bathOn ? 'with-bath' : 'no-bath'}">
@@ -1568,9 +1681,11 @@ setInterval(() => {
     selectedDay = getDisplayDay();
     render();
   }
-  // 12:00に表示日をリフレッシュ
+  // 12:00に表示日をリフレッシュ＆天気を再取得
   if (now.getHours() === 12 && now.getMinutes() === 0 && now.getSeconds() === 0) {
     selectedDay = getDisplayDay();
+    _weatherFetched = false;
+    fetchWeather();
     if (currentView === 'day') render();
   }
 }, 1000);
