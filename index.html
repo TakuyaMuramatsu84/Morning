@@ -21,9 +21,7 @@
     --font-sans: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
     --font-mono: 'SF Mono', ui-monospace, monospace;
   }
-
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
   body {
     background: var(--bg);
     color: var(--text);
@@ -34,8 +32,6 @@
     padding: env(safe-area-inset-top, 16px) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
     overflow-x: hidden;
   }
-
-  /* Noise texture overlay */
   body::before {
     content: '';
     position: fixed;
@@ -45,7 +41,6 @@
     z-index: 0;
     opacity: 0.4;
   }
-
   .container {
     position: relative;
     z-index: 1;
@@ -55,13 +50,71 @@
     margin: 0 auto;
     width: 100%;
   }
-
-  /* Header */
   .header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 28px;
   }
-
-  .header-left {}
+  .date-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .day-display {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .clock {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--muted);
+    text-align: right;
+    line-height: 1.5;
+  }
+  .clock .time-now {
+    font-size: 18px;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .wake-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .wake-card::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    opacity: 0.06;
+  }
+  .wake-card.no-bath::before { background: var(--accent-wake); }
+  .wake-card.with-bath::before { background: var(--accent-bath); }
+  .wake-label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+    font-family: var(--font-mono);
+  }
+  .wake-time {
+    font-family: var(--font-mono);
+    font-size: 52px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+  .wake-card.no-bath .wake-time { color: var(--accent-wake); }
+  .
