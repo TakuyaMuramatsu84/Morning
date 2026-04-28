@@ -21,7 +21,9 @@
     --font-sans: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
     --font-mono: 'SF Mono', ui-monospace, monospace;
   }
+
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
   body {
     background: var(--bg);
     color: var(--text);
@@ -32,6 +34,8 @@
     padding: env(safe-area-inset-top, 16px) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
     overflow-x: hidden;
   }
+
+  /* Noise texture overlay */
   body::before {
     content: '';
     position: fixed;
@@ -41,6 +45,7 @@
     z-index: 0;
     opacity: 0.4;
   }
+
   .container {
     position: relative;
     z-index: 1;
@@ -50,12 +55,17 @@
     margin: 0 auto;
     width: 100%;
   }
+
+  /* Header */
   .header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 28px;
   }
+
+  .header-left {}
+
   .date-label {
     font-family: var(--font-mono);
     font-size: 10px;
@@ -64,12 +74,14 @@
     text-transform: uppercase;
     margin-bottom: 4px;
   }
+
   .day-display {
     font-size: 28px;
     font-weight: 700;
     letter-spacing: -0.02em;
     line-height: 1;
   }
+
   .clock {
     font-family: var(--font-mono);
     font-size: 13px;
@@ -77,20 +89,25 @@
     text-align: right;
     line-height: 1.5;
   }
+
   .clock .time-now {
     font-size: 18px;
     color: var(--text);
     font-weight: 500;
   }
+
+  /* Wake card */
   .wake-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 20px;
-    padding: 20px 24px;
+    padding: 20px 16px;
     margin-bottom: 16px;
     position: relative;
     overflow: hidden;
+    min-width: 0;
   }
+
   .wake-card::before {
     content: '';
     position: absolute;
@@ -99,8 +116,10 @@
     border-radius: 50%;
     opacity: 0.06;
   }
+
   .wake-card.no-bath::before { background: var(--accent-wake); }
   .wake-card.with-bath::before { background: var(--accent-bath); }
+
   .wake-label {
     font-size: 10px;
     letter-spacing: 0.12em;
@@ -109,12 +128,1452 @@
     margin-bottom: 8px;
     font-family: var(--font-mono);
   }
+
   .wake-time {
     font-family: var(--font-mono);
-    font-size: 52px;
+    font-size: 38px;
     font-weight: 500;
     line-height: 1;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
+    overflow: hidden;
+    text-overflow: clip;
+    white-space: nowrap;
   }
+
   .wake-card.no-bath .wake-time { color: var(--accent-wake); }
-  .
+  .wake-card.with-bath .wake-time { color: var(--accent-bath); }
+
+  .wake-time.rule830 {
+    color: var(--green) !important;
+  }
+
+  .wake-sublabel {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+    font-weight: 300;
+  }
+
+  .cards-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  /* Info card */
+  .info-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+  }
+
+  .info-card .label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-family: var(--font-mono);
+  }
+
+  .info-card .value {
+    font-family: var(--font-mono);
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .info-card .sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+    font-weight: 300;
+  }
+
+  .info-card.depart .value { color: var(--accent-warn); }
+
+  /* Bath toggle */
+  .bath-toggle {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    user-select: none;
+    transition: border-color 0.2s;
+  }
+
+  .bath-toggle:active { opacity: 0.8; }
+
+  .bath-toggle.active { border-color: rgba(56,189,248,0.4); }
+
+  .toggle-icon {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    background: rgba(255,255,255,0.04);
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+
+  .bath-toggle.active .toggle-icon { background: rgba(56,189,248,0.12); }
+
+  .toggle-text {}
+  .toggle-title {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .toggle-sub {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 300;
+  }
+
+  .toggle-switch {
+    margin-left: auto;
+    width: 44px; height: 26px;
+    background: var(--border);
+    border-radius: 13px;
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+
+  .bath-toggle.active .toggle-switch { background: var(--accent-bath); }
+
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 20px; height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  }
+
+  .bath-toggle.active .toggle-switch::after { transform: translateX(18px); }
+
+  /* Tasks */
+  .tasks-section {
+    margin-bottom: 8px;
+  }
+
+  .tasks-header {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    font-family: var(--font-mono);
+  }
+
+  .task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .task-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+
+  .task-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .task-name {
+    font-size: 13px;
+    font-weight: 400;
+    flex: 1;
+  }
+
+  .task-time {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* Timeline bar */
+  .timeline {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .timeline-label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    font-family: var(--font-mono);
+  }
+
+  .bar-track {
+    height: 10px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 6px;
+    display: flex;
+    overflow: hidden;
+    gap: 1px;
+  }
+
+  .bar-seg {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  .bar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    margin-top: 10px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .legend-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+  }
+
+  /* Day nav */
+  .day-nav {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .day-btn {
+    flex: 1;
+    padding: 8px 4px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--muted);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+
+  .day-btn.active {
+    border-color: var(--accent-wake);
+    color: var(--accent-wake);
+    background: rgba(192,132,252,0.06);
+  }
+
+  .day-btn.today-mark {
+    position: relative;
+  }
+
+  .day-btn.today-mark::after {
+    content: '';
+    position: absolute;
+    bottom: 4px; left: 50%;
+    transform: translateX(-50%);
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--accent-warn);
+  }
+
+  /* Notice */
+  .notice {
+    background: rgba(251,146,60,0.08);
+    border: 1px solid rgba(251,146,60,0.2);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: #fdba74;
+    line-height: 1.6;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  .notice.show { display: block; }
+
+  /* Holiday */
+  .holiday-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 24px;
+    text-align: center;
+  }
+
+  .holiday-icon { font-size: 40px; margin-bottom: 12px; }
+  .holiday-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  .holiday-sub { font-size: 13px; color: var(--muted); font-weight: 300; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-in { animation: fadeIn 0.35s ease forwards; }
+
+  /* ===== ALARM BUTTON ===== */
+  .alarm-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 15px;
+    background: linear-gradient(135deg, rgba(192,132,252,0.15), rgba(56,189,248,0.1));
+    border: 1px solid rgba(192,132,252,0.3);
+    border-radius: 16px; cursor: pointer;
+    color: var(--accent-wake); font-size: 15px; font-weight: 700;
+    font-family: var(--font-sans);
+    transition: opacity 0.15s, transform 0.1s;
+    margin-bottom: 16px; text-decoration: none;
+  }
+  .alarm-btn:active { opacity: 0.7; transform: scale(0.98); }
+  .alarm-btn .alarm-time {
+    font-family: var(--font-mono); font-size: 18px; font-weight: 500;
+    color: var(--text);
+  }
+  .alarm-btn-clock {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 15px;
+    background: rgba(251,146,60,0.08);
+    border: 1px solid rgba(251,146,60,0.25);
+    border-radius: 16px; cursor: pointer;
+    color: var(--accent-warn); font-size: 15px; font-weight: 700;
+    font-family: var(--font-sans);
+    transition: opacity 0.15s, transform 0.1s;
+    margin-top: 8px; text-decoration: none; display: flex;
+  }
+  .alarm-btn-clock:active { opacity: 0.7; transform: scale(0.98); }
+
+  /* ===== SET TAB ===== */
+  .set-section { margin-bottom: 16px; }
+  .set-section-title {
+    font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--muted); font-family: var(--font-mono); margin-bottom: 10px;
+  }
+  .set-day-grid {
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .set-day-row {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 12px 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .set-day-row.set-target { border-color: rgba(192,132,252,0.4); background: rgba(192,132,252,0.05); }
+  .set-day-badge {
+    width: 32px; height: 32px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+    background: rgba(255,255,255,0.05);
+  }
+  .set-day-row.set-target .set-day-badge { background: rgba(192,132,252,0.2); color: var(--accent-wake); }
+  .set-day-info { flex: 1; }
+  .set-day-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .set-day-sub { font-size: 11px; color: var(--muted); }
+  .set-wake-display {
+    font-family: var(--font-mono); font-size: 18px; font-weight: 500;
+    color: var(--accent-wake); cursor: pointer; padding: 4px 8px;
+    border-radius: 8px; border: 1px solid rgba(192,132,252,0.25);
+    background: rgba(192,132,252,0.07); transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .set-wake-display:active { background: rgba(192,132,252,0.18); }
+  .set-wake-display.default { color: var(--muted); border-color: var(--border); background: transparent; }
+
+  /* time picker modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    display: flex; align-items: flex-end; justify-content: center;
+    z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal-sheet {
+    background: #1c1c26; border-radius: 24px 24px 0 0;
+    padding: 20px 24px 40px; width: 100%; max-width: 430px;
+    transform: translateY(40px); transition: transform 0.25s ease;
+  }
+  .modal-overlay.open .modal-sheet { transform: translateY(0); }
+  .modal-title {
+    font-size: 15px; font-weight: 700; margin-bottom: 4px; text-align: center;
+  }
+  .modal-sub { font-size: 12px; color: var(--muted); text-align: center; margin-bottom: 20px; }
+  .time-picker-row {
+    display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 24px;
+  }
+  .time-picker-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .time-picker-btn {
+    width: 44px; height: 36px; border: 1px solid var(--border);
+    background: var(--surface); border-radius: 10px;
+    color: var(--text); font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.12s;
+  }
+  .time-picker-btn:active { background: rgba(255,255,255,0.1); }
+  .time-picker-val {
+    font-family: var(--font-mono); font-size: 36px; font-weight: 500;
+    color: var(--accent-wake); width: 56px; text-align: center; line-height: 1.2;
+  }
+  .time-colon { font-family: var(--font-mono); font-size: 32px; color: var(--muted); padding-bottom: 4px; }
+  .modal-actions { display: flex; gap: 10px; }
+  .modal-btn {
+    flex: 1; padding: 14px; border-radius: 14px; font-size: 15px;
+    font-weight: 600; cursor: pointer; border: none; transition: opacity 0.15s;
+  }
+  .modal-btn:active { opacity: 0.75; }
+  .modal-btn.cancel { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+  .modal-btn.confirm { background: var(--accent-wake); color: #000; }
+  .modal-btn.reset { background: rgba(251,146,60,0.15); color: var(--accent-warn); border: 1px solid rgba(251,146,60,0.2); }
+
+  .view-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 4px;
+    border: 1px solid var(--border);
+  }
+  .view-tab {
+    flex: 1;
+    padding: 9px 6px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.18s;
+    font-weight: 500;
+  }
+  .view-tab.active {
+    background: rgba(192,132,252,0.15);
+    color: var(--accent-wake);
+  }
+
+  /* NOW: current task hero */
+  .now-hero {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 24px;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .now-hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    opacity: 0.05;
+    transition: background 0.4s;
+  }
+  .now-status-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .now-pulse {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 0 0 rgba(74,222,128,0.4);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(74,222,128,0.4); }
+    70% { box-shadow: 0 0 0 8px rgba(74,222,128,0); }
+    100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+  }
+  .now-status-text {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--green);
+    text-transform: uppercase;
+  }
+  .now-task-name {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+    line-height: 1.1;
+  }
+  .now-task-sub {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 300;
+    margin-bottom: 20px;
+  }
+
+  /* circular timer */
+  .now-timer-wrap {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .circle-wrap {
+    position: relative;
+    width: 80px; height: 80px;
+    flex-shrink: 0;
+  }
+  .circle-bg {
+    fill: none;
+    stroke: rgba(255,255,255,0.06);
+    stroke-width: 5;
+  }
+  .circle-prog {
+    fill: none;
+    stroke-width: 5;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: center;
+    transition: stroke-dashoffset 1s linear, stroke 0.4s;
+  }
+  .circle-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .circle-mins {
+    font-family: var(--font-mono);
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1;
+  }
+  .circle-unit {
+    font-size: 9px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .now-time-details {
+    flex: 1;
+  }
+  .now-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .now-detail-row:last-child { border-bottom: none; }
+  .now-detail-label { font-size: 11px; color: var(--muted); }
+  .now-detail-value {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* next task card */
+  .now-next {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 14px 18px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .now-next-arrow {
+    font-size: 18px;
+    color: var(--muted);
+  }
+  .now-next-info { flex: 1; }
+  .now-next-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    margin-bottom: 3px;
+  }
+  .now-next-name {
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .now-next-time {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* progress strip */
+  .now-progress-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+  .now-progress-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    margin-bottom: 12px;
+  }
+  .now-strip {
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.05);
+    position: relative;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .now-strip-done {
+    height: 100%;
+    border-radius: 4px 0 0 4px;
+    background: linear-gradient(90deg, #4ade80, #38bdf8);
+    transition: width 1s linear;
+  }
+  .now-strip-cursor {
+    position: absolute;
+    top: -3px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 6px rgba(255,255,255,0.5);
+    transform: translateX(-50%);
+    transition: left 1s linear;
+  }
+  .now-strip-labels {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* all-done / not-started states */
+  .now-state-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 48px 24px;
+    text-align: center;
+  }
+  .now-state-icon { font-size: 44px; margin-bottom: 14px; }
+  .now-state-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  .now-state-sub { font-size: 13px; color: var(--muted); font-weight: 300; line-height: 1.6; }
+
+  /* task queue list */
+  .now-queue {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .now-queue-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    transition: opacity 0.3s;
+  }
+  .now-queue-row.done {
+    opacity: 0.35;
+  }
+  .now-queue-row.current {
+    border-color: rgba(192,132,252,0.35);
+    background: rgba(192,132,252,0.05);
+  }
+  .now-queue-check {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .now-queue-row.done .now-queue-check {
+    background: var(--green);
+    border-color: var(--green);
+    color: #000;
+  }
+  .now-queue-row.current .now-queue-check {
+    border-color: var(--accent-wake);
+    background: rgba(192,132,252,0.2);
+  }
+  .now-queue-name { flex: 1; font-size: 13px; }
+  .now-queue-dur {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-left">
+      <div class="date-label" id="dateLabel"></div>
+      <div class="day-display" id="dayDisplay"></div>
+    </div>
+    <div class="clock">
+      <div class="time-now" id="clockEl"></div>
+      <div id="nextChangeLabel" style="font-size:10px;margin-top:2px;"></div>
+    </div>
+  </div>
+
+  <!-- View tabs: いまここ / 曜日 / 設定 -->
+  <div class="view-tabs">
+    <button class="view-tab" id="tabNow" onclick="switchView('now')">⏱ いまここ</button>
+    <button class="view-tab active" id="tabDay" onclick="switchView('day')">📅 曜日別</button>
+    <button class="view-tab" id="tabSet" onclick="switchView('set')">⏰ 設定</button>
+  </div>
+
+  <!-- Day nav (曜日別のみ表示) -->
+  <div class="day-nav" id="dayNav"></div>
+
+  <!-- Main content -->
+  <div id="mainContent"></div>
+</div>
+
+<!-- Time picker modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal-sheet">
+    <div class="modal-title" id="modalTitle">起床時間を設定</div>
+    <div class="modal-sub" id="modalSub"></div>
+    <div class="time-picker-row">
+      <div class="time-picker-col">
+        <button class="time-picker-btn" onclick="adjustTime('h',1)">▲</button>
+        <div class="time-picker-val" id="pickH">07</div>
+        <button class="time-picker-btn" onclick="adjustTime('h',-1)">▼</button>
+      </div>
+      <div class="time-colon">:</div>
+      <div class="time-picker-col">
+        <button class="time-picker-btn" onclick="adjustTime('m',5)">▲</button>
+        <div class="time-picker-val" id="pickM">00</div>
+        <button class="time-picker-btn" onclick="adjustTime('m',-5)">▼</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn reset" onclick="resetWakeTime()">リセット</button>
+      <button class="modal-btn cancel" onclick="closeModal()">キャンセル</button>
+      <button class="modal-btn confirm" onclick="confirmWakeTime()">設定</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// スケジュールデータ
+// wakeNoBath: 風呂なし起床時間 (分で表現, 0=0:00)
+// wakeBath:   風呂あり起床時間
+// depart:     出発時刻
+// class:      授業/バス
+// note:       注意メモ
+// rule830:    8:30ルール適用かどうか
+
+const DAYS = ['日','月','火','水','木','金','土'];
+
+// 起床時間計算:
+// 風呂なし: 朝食10+弁当(曜日次第)+服5+身だしなみ10+荷物5+余裕(曜日次第) = 合計
+// 風呂あり: 朝食10+弁当(曜日次第)+風呂15+髪10+服5+荷物5+余裕(曜日次第) = 合計
+// 月: 弁当10, 余裕10 / なし=40→8:30ルール / あり=55→8:30ルール (depart 12:44)
+// 火: 弁当10, 余裕10 / なし=40→depart8:34→wake7:54 / あり=55→wake7:39 (depart 8:34)
+// 水: 弁当10, 余裕10 / なし=40→8:30ルール / あり=55→8:30ルール (depart 10:14)
+// 木: 弁当なし, 余裕10 / なし=30→8:30ルール / あり=45→8:30ルール (no depart)
+// 金: 弁当5, 余裕5 / なし=30→depart7:30→wake7:00 / あり=45→wake6:45 (depart 7:30, bus 7:45)
+
+const schedule = {
+  1: { // 月
+    wakeNoBath: 8*60+30, wakeBath: 8*60+30,
+    depart: 12*60+44, event: '13:00 授業',
+    rule830Both: true,
+    bentMin: 10, bufferMin: 10,
+    note: '余裕たっぷり。朝の時間を有効活用しよう。'
+  },
+  2: { // 火
+    wakeNoBath: 7*60+54, wakeBath: 7*60+39,
+    depart: 8*60+34, event: '8:50 授業',
+    rule830Both: false,
+    bentMin: 10, bufferMin: 10,
+    note: '月曜に入浴済みなら風呂なしで7:54起き。'
+  },
+  3: { // 水
+    wakeNoBath: 8*60+30, wakeBath: 8*60+30,
+    depart: 10*60+14, event: '10:30 授業',
+    rule830Both: true,
+    bentMin: 10, bufferMin: 10,
+    note: null
+  },
+  4: { // 木
+    wakeNoBath: 8*60+30, wakeBath: 8*60+30,
+    depart: null, event: '授業なし',
+    rule830Both: true,
+    bentMin: 0, bufferMin: 10,
+    noSchool: true,
+    note: '金曜に備えて今夜はお風呂に入ろう。'
+  },
+  5: { // 金
+    wakeNoBath: 7*60+0, wakeBath: 6*60+45,
+    depart: 7*60+30, event: '7:45 バス',
+    rule830Both: false,
+    bentMin: 5, bufferMin: 5,
+    isBus: true,
+    note: '木曜に入浴済みなら風呂なしで7:00起き。バスは乗り遅れ厳禁！出発7:30厳守。'
+  }
+};
+
+// タスク定義 — 風呂ありは風呂→髪→服の順
+function getTasks(hasBath, dayData) {
+  const bento = dayData.bentMin;
+  const buffer = dayData.bufferMin;
+  const tasks = [];
+  tasks.push({ name: '朝ごはん', min: 10, color: '#4ade80' });
+  if (bento > 0) tasks.push({ name: 'お弁当の準備', min: bento, color: '#6ee7b7' });
+  if (hasBath) {
+    tasks.push({ name: 'お風呂', min: 15, color: '#38bdf8' });
+    tasks.push({ name: '髪を乾かす・セット', min: 10, color: '#7dd3fc' });
+    tasks.push({ name: '服を選ぶ・着る', min: 5, color: '#a5b4fc' });
+  } else {
+    tasks.push({ name: '服を選ぶ・着る', min: 5, color: '#a5b4fc' });
+    tasks.push({ name: '身だしなみ・髪セット', min: 10, color: '#7dd3fc' });
+  }
+  tasks.push({ name: '荷物をまとめる', min: 5, color: '#fcd34d' });
+  tasks.push({ name: '余裕', min: buffer, color: '#334155' });
+  return tasks;
+}
+
+function fmtMin(m) {
+  const h = Math.floor(m / 60);
+  const min = m % 60;
+  return `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+}
+
+// 今日か次の平日の表示日を決定
+function getDisplayDay() {
+  const now = new Date();
+  const dow = now.getDay(); // 0=日
+  const hour = now.getHours();
+
+  // 今日が平日 && 12:00前 → 今日
+  // 今日が平日 && 12:00以降 → 翌平日
+  // 今日が土日 → 次の月曜
+
+  let target = dow;
+
+  const isWeekday = (d) => d >= 1 && d <= 5;
+
+  if (isWeekday(target)) {
+    if (hour >= 12) {
+      // 翌平日
+      target = target === 5 ? 1 : target + 1;
+      // 木曜は休みなので金曜へ（月→火は普通）
+      if (target === 4) target = 5;
+    }
+  } else {
+    // 土→月, 日→月
+    target = 1;
+  }
+
+  return target;
+}
+
+// 今日の曜日インデックス
+function getTodayDow() {
+  return new Date().getDay();
+}
+
+let selectedDay = getDisplayDay();
+let bathOn = false;
+let currentView = 'day'; // 'day' | 'now' | 'set'
+
+// 曜日ごとのカスタム起床時間 (分単位, nullなら自動)
+// localStorageが使えない環境向けにメモリのみで保持
+const customWake = { 1: null, 2: null, 3: null, 4: null, 5: null };
+
+// モーダル用一時状態
+let _modalDay = null;
+let _pickH = 7, _pickM = 0;
+
+function getWake(dow, hasBath) {
+  if (customWake[dow] !== null) return customWake[dow];
+  const data = schedule[dow];
+  return hasBath ? data.wakeBath : data.wakeNoBath;
+}
+
+function switchView(v) {
+  currentView = v;
+  document.getElementById('tabNow').classList.toggle('active', v === 'now');
+  document.getElementById('tabDay').classList.toggle('active', v === 'day');
+  document.getElementById('tabSet').classList.toggle('active', v === 'set');
+  document.getElementById('dayNav').style.display = v === 'day' ? 'flex' : 'none';
+  _nowState = null; _nowCurIdx = -1; // nowタブの再構築フラグリセット
+  render();
+}
+
+function render() {
+  if (currentView === 'now') {
+    renderNow();
+  } else if (currentView === 'set') {
+    renderSet();
+  } else {
+    renderDayNav();
+    renderMain();
+  }
+  updateClock();
+}
+
+// ===== SET TAB =====
+function renderSet() {
+  const content = document.getElementById('mainContent');
+  const now = new Date();
+  document.getElementById('dateLabel').textContent = `${now.getFullYear()}年${now.getMonth()+1}月`;
+  document.getElementById('dayDisplay').textContent = '起床時間の設定';
+
+  const targetDow = getDisplayDay(); // 次の登校日
+
+  const rows = [1,2,3,4,5].map(d => {
+    const data = schedule[d];
+    const isTarget = d === targetDow;
+    const custom = customWake[d];
+    const autoWake = bathOn ? data.wakeNoBath : data.wakeNoBath; // 風呂なし基準
+    const displayWake = custom !== null ? custom : autoWake;
+    const isCustom = custom !== null;
+    const dayColors = { 1:'#c084fc', 2:'#f87171', 3:'#38bdf8', 4:'#888780', 5:'#fb923c' };
+
+    return `<div class="set-day-row ${isTarget ? 'set-target' : ''}">
+      <div class="set-day-badge" style="${isTarget ? '' : `color:${dayColors[d]}`}">${DAYS[d]}</div>
+      <div class="set-day-info">
+        <div class="set-day-name">${data.event}${isTarget ? ' ← 次の登校日' : ''}</div>
+        <div class="set-day-sub">${isCustom ? '✏️ カスタム設定中' : '自動計算'}</div>
+      </div>
+      <div class="set-wake-display ${isCustom ? '' : 'default'}" onclick="openModal(${d})">${fmtMin(displayWake)}</div>
+    </div>`;
+  }).join('');
+
+  const targetData = schedule[targetDow];
+  const targetWake = customWake[targetDow] !== null ? customWake[targetDow] : targetData.wakeNoBath;
+  const targetWakeStr = fmtMin(targetWake);
+  const alarmUrl = `shortcuts://run-shortcut?name=${encodeURIComponent('アラームセット')}&input=${encodeURIComponent(targetWakeStr)}`;
+  const clockUrl = `shortcuts://run-shortcut?name=${encodeURIComponent('時計を開く')}`;
+
+  content.innerHTML = `
+    <div class="set-section animate-in">
+      <div class="set-section-title">曜日ごとの起床時間</div>
+      <div class="set-day-grid">${rows}</div>
+    </div>
+    <div class="set-section animate-in" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;">
+      <div style="font-size:12px;color:var(--muted);line-height:1.7;">
+        💡 時刻をタップして起床時間をカスタム設定できます。<br>
+        設定した時間が「いまここ」タブのタスク開始時刻になります。<br>
+        リセットすると自動計算に戻ります。
+      </div>
+    </div>
+    <a class="alarm-btn animate-in" href="${alarmUrl}">
+      ⏰ 次の登校日のアラームをセット <span class="alarm-time">${targetWakeStr}</span>
+    </a>
+    <a class="alarm-btn-clock animate-in" href="${clockUrl}">
+      🕐 時計アプリでアラームを確認・編集する
+    </a>`;
+}
+
+// ===== MODAL =====
+function openModal(dow) {
+  _modalDay = dow;
+  const data = schedule[dow];
+  const cur = customWake[dow];
+  const base = cur !== null ? cur : (bathOn ? data.wakeNoBath : data.wakeNoBath);
+  _pickH = Math.floor(base / 60);
+  _pickM = base % 60;
+  updatePickerDisplay();
+  document.getElementById('modalTitle').textContent = `${DAYS[dow]}曜日の起床時間`;
+  document.getElementById('modalSub').textContent = `${data.event} — 出発${data.depart ? fmtMin(data.depart) : '—'}`;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  _modalDay = null;
+}
+
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+function adjustTime(part, delta) {
+  if (part === 'h') {
+    _pickH = ((_pickH + delta) + 24) % 24;
+  } else {
+    _pickM = ((_pickM + delta) + 60) % 60;
+  }
+  updatePickerDisplay();
+}
+
+function updatePickerDisplay() {
+  document.getElementById('pickH').textContent = String(_pickH).padStart(2,'0');
+  document.getElementById('pickM').textContent = String(_pickM).padStart(2,'0');
+}
+
+function confirmWakeTime() {
+  if (_modalDay === null) return;
+  customWake[_modalDay] = _pickH * 60 + _pickM;
+  closeModal();
+  renderSet();
+  _nowState = null; _nowCurIdx = -1;
+}
+
+function resetWakeTime() {
+  if (_modalDay === null) return;
+  customWake[_modalDay] = null;
+  closeModal();
+  renderSet();
+  _nowState = null; _nowCurIdx = -1;
+}
+
+// ===== NOW TAB =====
+// 前回の描画状態を記憶して、変化があった部分だけDOMを更新する
+let _nowState = null; // 'holiday'|'before'|'active'|'done'
+let _nowCurIdx = -1;
+
+function calcNowData() {
+  const dow = getTodayDow();
+  const data = schedule[dow];
+  if (!data) return { state: 'holiday' };
+
+  const tasks = getTasks(bathOn, data);
+  const wake = getWake(dow, bathOn);
+  const now = new Date();
+  const nowSec = now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds();
+  const nowMin = nowSec / 60;
+
+  let cursor = wake;
+  const timed = tasks.map(t => {
+    const start = cursor;
+    const end = cursor + t.min;
+    cursor = end;
+    return { ...t, start, end };
+  });
+  const totalEnd = timed[timed.length - 1].end;
+
+  if (nowMin < wake) {
+    return { state: 'before', wake, data, minsToWake: Math.ceil(wake - nowMin) };
+  }
+  if (nowMin >= totalEnd) {
+    return { state: 'done' };
+  }
+
+  let curIdx = timed.findIndex(t => nowMin >= t.start && nowMin < t.end);
+  if (curIdx < 0) curIdx = timed.length - 1;
+  const cur = timed[curIdx];
+  const next = timed[curIdx + 1] || null;
+
+  const endSec = cur.end * 60;
+  const remainSec = Math.max(0, endSec - nowSec);
+  const remainMin = Math.ceil(remainSec / 60);
+
+  const R = 32, C = 2 * Math.PI * R;
+  const taskElapsed = nowMin - cur.start;
+  const taskProg = Math.min(1, taskElapsed / cur.min);
+  const dashOffset = C * (1 - taskProg);
+
+  const totalRange = totalEnd - wake;
+  const overallPct = Math.min(100, ((nowMin - wake) / totalRange) * 100);
+  const departRemain = Math.max(0, Math.ceil(totalEnd - nowMin));
+  const urgColor = remainMin <= 2 ? '#f87171' : remainMin <= 5 ? '#fb923c' : cur.color;
+
+  return { state: 'active', cur, next, curIdx, timed, remainMin, dashOffset, overallPct,
+           departRemain, urgColor, wake, totalEnd, data, R, C };
+}
+
+function setTxt(id, val) {
+  const el = document.getElementById(id);
+  if (el && el.textContent !== String(val)) el.textContent = val;
+}
+function setStyle(id, prop, val) {
+  const el = document.getElementById(id);
+  if (el) el.style[prop] = val;
+}
+function setAttr(id, attr, val) {
+  const el = document.getElementById(id);
+  if (el && el.getAttribute(attr) !== String(val)) el.setAttribute(attr, val);
+}
+
+function renderNow() {
+  const content = document.getElementById('mainContent');
+  const d = calcNowData();
+  const now = new Date();
+
+  // ヘッダー
+  const dow = getTodayDow();
+  document.getElementById('dateLabel').textContent =
+    `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日`;
+  document.getElementById('dayDisplay').textContent = `${DAYS[dow]}曜日`;
+
+  // 状態が変わった or 現タスクが変わった → DOM全再構築
+  const needRebuild = d.state !== _nowState
+    || (d.state === 'active' && d.curIdx !== _nowCurIdx)
+    || (d.state === 'before' && _nowState !== 'before');
+
+  if (needRebuild) {
+    _nowState = d.state;
+    _nowCurIdx = d.state === 'active' ? d.curIdx : -1;
+    buildNowDOM(content, d);
+    return;
+  }
+
+  // 状態変化なし → 数値だけパッチ
+  if (d.state === 'before') {
+    setTxt('nowMinsToWake', d.minsToWake);
+    return;
+  }
+  if (d.state === 'active') {
+    const { remainMin, dashOffset, overallPct, departRemain, urgColor, C } = d;
+    setTxt('circMins', remainMin);
+    setStyle('circMins', 'color', urgColor);
+    setAttr('circProg', 'stroke', urgColor);
+    setAttr('circProg', 'stroke-dashoffset', dashOffset.toFixed(2));
+    setStyle('stripDone', 'width', overallPct.toFixed(2) + '%');
+    setStyle('stripCursor', 'left', overallPct.toFixed(2) + '%');
+    setTxt('departRemainVal', departRemain);
+    const departEl = document.getElementById('departRemainVal');
+    if (departEl) departEl.style.color = departRemain <= 10 ? 'var(--accent-warn)' : 'var(--text)';
+    setTxt('progressLabel', `全体の進捗 — あと${departRemain}分で出発`);
+  }
+}
+
+function buildNowDOM(content, d) {
+  if (d.state === 'holiday') {
+    content.innerHTML = `
+      <div class="now-state-card animate-in">
+        <div class="now-state-icon">🌿</div>
+        <div class="now-state-title">今日は休日</div>
+        <div class="now-state-sub">ゆっくり過ごしてください。</div>
+      </div>`;
+    return;
+  }
+
+  if (d.state === 'before') {
+    content.innerHTML = `
+      <div class="now-state-card animate-in">
+        <div class="now-state-icon">😴</div>
+        <div class="now-state-title">まだ起床前</div>
+        <div class="now-state-sub">起床時刻まであと <strong id="nowMinsToWake" style="color:var(--accent-wake)">${d.minsToWake}</strong>分<br>（${fmtMin(d.wake)} 起床予定）</div>
+      </div>
+      <div style="margin-top:14px;">
+        <div class="bath-toggle ${bathOn ? 'active' : ''}" onclick="toggleBath()">
+          <div class="toggle-icon">🚿</div>
+          <div class="toggle-text">
+            <div class="toggle-title">朝風呂する</div>
+            <div class="toggle-sub">+25分 (風呂15分+髪10分)</div>
+          </div>
+          <div class="toggle-switch"></div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  if (d.state === 'done') {
+    content.innerHTML = `
+      <div class="now-state-card animate-in">
+        <div class="now-state-icon">✅</div>
+        <div class="now-state-title">準備完了！</div>
+        <div class="now-state-sub">すべてのタスクが終わりました。<br>行ってらっしゃい！</div>
+      </div>`;
+    return;
+  }
+
+  // active
+  const { cur, next, curIdx, timed, remainMin, dashOffset, overallPct,
+          departRemain, urgColor, wake, totalEnd, data, R, C } = d;
+
+  const queueRows = timed.map((t, i) => {
+    const state = i < curIdx ? 'done' : i === curIdx ? 'current' : '';
+    const check = i < curIdx ? '✓' : i === curIdx ? '▶' : '';
+    return `<div class="now-queue-row ${state}">
+      <div class="now-queue-check">${check}</div>
+      <div class="now-queue-name">${t.name}</div>
+      <div class="now-queue-dur">${t.min}分</div>
+    </div>`;
+  }).join('');
+
+  content.innerHTML = `
+    <div class="now-hero animate-in">
+      <div class="now-status-row">
+        <div class="now-pulse"></div>
+        <div class="now-status-text">進行中</div>
+      </div>
+      <div class="now-task-name" style="color:${cur.color}">${cur.name}</div>
+      <div class="now-task-sub">${fmtMin(cur.start)} → ${fmtMin(cur.end)}</div>
+      <div class="now-timer-wrap">
+        <div class="circle-wrap">
+          <svg width="80" height="80" viewBox="0 0 80 80">
+            <circle class="circle-bg" cx="40" cy="40" r="${R}"/>
+            <circle class="circle-prog" id="circProg"
+              cx="40" cy="40" r="${R}"
+              stroke="${urgColor}"
+              stroke-dasharray="${C}"
+              stroke-dashoffset="${dashOffset.toFixed(2)}"/>
+          </svg>
+          <div class="circle-label">
+            <div class="circle-mins" id="circMins" style="color:${urgColor}">${remainMin}</div>
+            <div class="circle-unit">分</div>
+          </div>
+        </div>
+        <div class="now-time-details">
+          <div class="now-detail-row">
+            <span class="now-detail-label">終了予定</span>
+            <span class="now-detail-value">${fmtMin(cur.end)}</span>
+          </div>
+          <div class="now-detail-row">
+            <span class="now-detail-label">出発まで</span>
+            <span class="now-detail-value" id="departRemainVal"
+              style="color:${departRemain<=10?'var(--accent-warn)':'var(--text)'}">${departRemain}分</span>
+          </div>
+          <div class="now-detail-row">
+            <span class="now-detail-label">出発時刻</span>
+            <span class="now-detail-value" style="color:var(--accent-warn)">${data.depart ? fmtMin(data.depart) : '—'}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    ${next ? `
+    <div class="now-next animate-in">
+      <div class="now-next-arrow">→</div>
+      <div class="now-next-info">
+        <div class="now-next-label">次のタスク</div>
+        <div class="now-next-name" style="color:${next.color}">${next.name}</div>
+      </div>
+      <div class="now-next-time">${next.min}分</div>
+    </div>` : ''}
+
+    <div class="now-progress-wrap animate-in">
+      <div class="now-progress-label" id="progressLabel">全体の進捗 — あと${departRemain}分で出発</div>
+      <div class="now-strip">
+        <div class="now-strip-done" id="stripDone" style="width:${overallPct.toFixed(2)}%"></div>
+        <div class="now-strip-cursor" id="stripCursor" style="left:${overallPct.toFixed(2)}%"></div>
+      </div>
+      <div class="now-strip-labels">
+        <span>${fmtMin(wake)} 起床</span>
+        <span>${fmtMin(totalEnd)} 出発</span>
+      </div>
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <div class="tasks-header" style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-family:var(--font-mono);">タスク一覧</div>
+      <div class="now-queue">${queueRows}</div>
+    </div>
+
+    <div class="bath-toggle ${bathOn ? 'active' : ''}" onclick="toggleBath()">
+      <div class="toggle-icon">🚿</div>
+      <div class="toggle-text">
+        <div class="toggle-title">朝風呂する</div>
+        <div class="toggle-sub">+25分 (風呂15分+髪10分)</div>
+      </div>
+      <div class="toggle-switch"></div>
+    </div>
+  `;
+}
+
+function renderDayNav() {
+  const nav = document.getElementById('dayNav');
+  const today = getTodayDow();
+  nav.innerHTML = '';
+  [1,2,3,4,5].forEach(d => {
+    const btn = document.createElement('button');
+    btn.className = 'day-btn' + (d === selectedDay ? ' active' : '') + (d === today ? ' today-mark' : '');
+    btn.textContent = DAYS[d];
+    btn.onclick = () => { selectedDay = d; render(); };
+    nav.appendChild(btn);
+  });
+}
+
+function renderMain() {
+  const content = document.getElementById('mainContent');
+  const data = schedule[selectedDay];
+  const dayName = DAYS[selectedDay];
+
+  // date header
+  const now = new Date();
+  const displayIsToday = selectedDay === getTodayDow() && now.getHours() < 12;
+  const displayIsTomorrow = selectedDay === getDisplayDay() && !displayIsToday;
+
+  let dayLabel = `${now.getFullYear()}年${now.getMonth()+1}月`;
+  document.getElementById('dateLabel').textContent = dayLabel + (displayIsToday ? ' — 今日' : displayIsTomorrow ? ' — 次の登校日' : '');
+  document.getElementById('dayDisplay').textContent = `${dayName}曜日`;
+
+  const tasks = getTasks(bathOn, data);
+  const totalMin = tasks.reduce((s,t) => s + t.min, 0);
+  const wake = customWake[selectedDay] !== null ? customWake[selectedDay] : (bathOn ? data.wakeBath : data.wakeNoBath);
+  const wakeStr = fmtMin(wake);
+  const isRule830 = wake <= 8*60+30 && data.rule830Both;
+
+  const noticeHtml = (data.note && data.isBus)
+    ? `<div class="notice show">⚠️ ${data.note}</div>`
+    : (data.note ? `<div class="notice show" style="background:rgba(192,132,252,0.07);border-color:rgba(192,132,252,0.2);color:#d8b4fe;">💡 ${data.note}</div>` : '');
+
+  // bar segments
+  const barTotal = totalMin;
+  const segs = tasks.map(t => {
+    const pct = (t.min / barTotal * 100).toFixed(1);
+    return `<div class="bar-seg" style="width:${pct}%;background:${t.color};opacity:${t.color === '#334155' ? 0.5 : 0.85}"></div>`;
+  }).join('');
+
+  const legendItems = tasks.map(t =>
+    `<div class="legend-item"><div class="legend-dot" style="background:${t.color}"></div>${t.name}</div>`
+  ).join('');
+
+  const taskRows = tasks.map(t =>
+    `<div class="task-row">
+      <div class="task-dot" style="background:${t.color}"></div>
+      <div class="task-name">${t.name}</div>
+      <div class="task-time">${t.min}分</div>
+    </div>`
+  ).join('');
+
+  const alarmTime = fmtMin(wake); // 例: "7:54"
+  const alarmUrl = `shortcuts://run-shortcut?name=${encodeURIComponent('アラームセット')}&input=${encodeURIComponent(alarmTime)}`;
+
+  content.innerHTML = `
+    ${noticeHtml}
+
+    <div class="cards-row animate-in">
+      <div class="wake-card ${bathOn ? 'with-bath' : 'no-bath'}">
+        <div class="wake-label">起床時間</div>
+        <div class="wake-time ${isRule830 ? 'rule830' : ''}">${wakeStr}</div>
+        <div class="wake-sublabel">${isRule830 ? '8:30ルール適用' : (bathOn ? '風呂あり' : '風呂なし')}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="info-card depart">
+          <div class="label">出発</div>
+          <div class="value">${data.depart ? fmtMin(data.depart) : '—'}</div>
+          <div class="sub">${data.event}</div>
+        </div>
+        <div class="info-card">
+          <div class="label">準備時間</div>
+          <div class="value">${totalMin}<span style="font-size:13px;color:var(--muted);font-family:var(--font-sans)">分</span></div>
+        </div>
+      </div>
+    </div>
+
+    <a class="alarm-btn animate-in" href="${alarmUrl}">
+      ⏰ アラームをセット <span class="alarm-time">${alarmTime}</span>
+    </a>
+
+    <div class="bath-toggle ${bathOn ? 'active' : ''} animate-in" id="bathToggle" onclick="toggleBath()">
+      <div class="toggle-icon">🚿</div>
+      <div class="toggle-text">
+        <div class="toggle-title">朝風呂する</div>
+        <div class="toggle-sub">+25分 (風呂15分+髪10分)</div>
+      </div>
+      <div class="toggle-switch"></div>
+    </div>
+
+    <div class="timeline animate-in">
+      <div class="timeline-label">タスク内訳 — 計${totalMin}分</div>
+      <div class="bar-track">${segs}</div>
+      <div class="bar-legend">${legendItems}</div>
+    </div>
+
+    <div class="tasks-section animate-in">
+      <div class="tasks-header">タスクリスト</div>
+      <div class="task-list">${taskRows}</div>
+    </div>
+  `;
+}
+
+function toggleBath() {
+  bathOn = !bathOn;
+  renderMain();
+}
+
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clockEl').textContent = `${h}:${m}:${s}`;
+
+  // 次の切り替えまでの時間
+  const isAM = now.getHours() < 12;
+  const label = document.getElementById('nextChangeLabel');
+  if (isAM) {
+    const minsLeft = (12*60) - (now.getHours()*60 + now.getMinutes());
+    if (minsLeft < 60) {
+      label.textContent = `${minsLeft}分後に翌日表示へ`;
+      label.style.color = 'var(--accent-warn)';
+    } else {
+      label.textContent = '';
+    }
+  } else {
+    label.textContent = '翌日モード';
+    label.style.color = 'var(--muted)';
+  }
+}
+
+// 初期化 — デフォルトを「いまここ」タブに
+currentView = 'now';
+document.getElementById('tabNow').classList.add('active');
+document.getElementById('tabDay').classList.remove('active');
+document.getElementById('tabSet').classList.remove('active');
+document.getElementById('dayNav').style.display = 'none';
+render();
+
+let _lastDate = new Date().getDate();
+
+setInterval(() => {
+  updateClock();
+  if (currentView === 'now') {
+    renderNow();
+  }
+  const now = new Date();
+  // 日付が変わったら、昨日の曜日のカスタム設定だけリセット
+  if (now.getDate() !== _lastDate) {
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayDow = yesterday.getDay(); // 0=日〜6=土
+    if (customWake[yesterdayDow] !== undefined) {
+      customWake[yesterdayDow] = null;
+    }
+    _lastDate = now.getDate();
+    _nowState = null; _nowCurIdx = -1;
+    selectedDay = getDisplayDay();
+    render();
+  }
+  // 12:00に表示日をリフレッシュ
+  if (now.getHours() === 12 && now.getMinutes() === 0 && now.getSeconds() === 0) {
+    selectedDay = getDisplayDay();
+    if (currentView === 'day') render();
+  }
+}, 1000);
+</script>
+</body>
+</html>
