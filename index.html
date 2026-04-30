@@ -592,16 +592,19 @@
   }
   .view-tab {
     flex: 1;
-    padding: 9px 6px;
+    padding: 9px 2px;
     border: none;
     border-radius: 10px;
     background: transparent;
     color: var(--muted);
     font-family: var(--font-sans);
-    font-size: 12px;
+    font-size: 11px;
     cursor: pointer;
     transition: all 0.18s;
     font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .view-tab.active {
     background: rgba(192,132,252,0.15);
@@ -1054,8 +1057,8 @@
   <div class="view-tabs">
     <button class="view-tab" id="tabNow" onclick="switchView('now')">⏱ いまここ</button>
     <button class="view-tab active" id="tabDay" onclick="switchView('day')">📅 曜日別</button>
-    <button class="view-tab" id="tabSet" onclick="switchView('set')">⏰ 設定</button>
-    <button class="view-tab" id="tabEdit" onclick="switchView('edit')">✏️ 編集</button>
+    <button class="view-tab" id="tabSet" onclick="switchView('set')">⏰ 起床時間</button>
+    <button class="view-tab" id="tabEdit" onclick="switchView('edit')">✏️ タスク編集</button>
   </div>
 
   <!-- Day nav (曜日別のみ表示) -->
@@ -1086,7 +1089,10 @@
     <div class="modal-actions">
       <button class="modal-btn reset" onclick="resetWakeTime()">リセット</button>
       <button class="modal-btn cancel" onclick="closeModal()">キャンセル</button>
-      <button class="modal-btn confirm" onclick="confirmWakeTime()">設定</button>
+    </div>
+    <div class="modal-actions" style="margin-top:10px;">
+      <button class="modal-btn" style="background:rgba(192,132,252,0.15);color:var(--accent-wake);border:1px solid rgba(192,132,252,0.3);" onclick="confirmWakeTime('repeat')">🔁 繰り返し</button>
+      <button class="modal-btn confirm" onclick="confirmWakeTime('today')">📅 今日のみ</button>
     </div>
   </div>
 </div>
@@ -1215,8 +1221,11 @@ let selectedDay = getDisplayDay();
 let bathOn = false;
 let currentView = 'day'; // 'day' | 'now' | 'set'
 
-// 曜日ごとのカスタム起床時間 (分単位, nullなら自動)
-const customWake = { 1: null, 2: null, 3: null, 4: null, 5: null };
+// 曜日ごとのカスタム起床時間
+// customWake  : 「今日のみ」— 翌日0時に自動リセット (分単位 or null)
+// persistWake : 「繰り返し」— 手動リセットまで永続 (分単位 or null)
+const customWake   = { 1: null, 2: null, 3: null, 4: null, 5: null };
+const persistWake  = { 1: null, 2: null, 3: null, 4: null, 5: null };
 
 // ===== カスタムタスク =====
 // 曜日ごとに追加タスクを保持 { name, min, color }
@@ -1227,7 +1236,7 @@ function nextColor() { return TASK_COLORS[_colorIdx++ % TASK_COLORS.length]; }
 // デフォルトタスク（固定・削除不可）を曜日データから生成
 function getDefaultTasks(hasBath, dayData) {
   const tasks = [];
-  tasks.push({ id: 'meal', name: '朝ごはん', min: 10, color: '#4ade80', fixed: true });
+  tasks.push({ id: 'meal', name: '朝ごはん', min: 10, color: '#4ade80', fixed: false });
   if (dayData.bentMin > 0) tasks.push({ id: 'bento', name: 'お弁当の準備', min: dayData.bentMin, color: '#6ee7b7', fixed: false });
   if (hasBath) {
     tasks.push({ id: 'bath', name: 'お風呂', min: 15, color: '#38bdf8', fixed: false });
@@ -1238,7 +1247,7 @@ function getDefaultTasks(hasBath, dayData) {
     tasks.push({ id: 'groom', name: '身だしなみ・髪セット', min: 10, color: '#7dd3fc', fixed: false });
   }
   tasks.push({ id: 'bag', name: '荷物をまとめる', min: 5, color: '#fcd34d', fixed: false });
-  tasks.push({ id: 'buffer', name: '余裕', min: dayData.bufferMin, color: '#334155', fixed: true });
+  tasks.push({ id: 'buffer', name: '余裕', min: dayData.bufferMin, color: '#334155', fixed: false });
   return tasks;
 }
 
@@ -1271,7 +1280,8 @@ let _modalDay = null;
 let _pickH = 7, _pickM = 0;
 
 function getWake(dow, hasBath) {
-  if (customWake[dow] !== null) return customWake[dow];
+  if (customWake[dow] !== null) return customWake[dow];   // 今日のみ
+  if (persistWake[dow] !== null) return persistWake[dow]; // 繰り返し
   const data = schedule[dow];
   const raw = hasBath ? data.wakeBath : data.wakeNoBath;
   const MIN_WAKE = 8 * 60 + 30;
@@ -1397,17 +1407,18 @@ function renderSet() {
   const rows = [1,2,3,4,5].map(d => {
     const data = schedule[d];
     const isTarget = d === targetDow;
-    const custom = customWake[d];
-    const autoWake = bathOn ? data.wakeNoBath : data.wakeNoBath; // 風呂なし基準
-    const displayWake = custom !== null ? custom : autoWake;
-    const isCustom = custom !== null;
+    const todayVal = customWake[d];
+    const repeatVal = persistWake[d];
+    const displayWake = getWake(d, false);
+    const isCustom = todayVal !== null || repeatVal !== null;
+    const statusLabel = todayVal !== null ? '📅 今日のみ設定中' : repeatVal !== null ? '🔁 繰り返し設定中' : '自動計算';
     const dayColors = { 1:'#c084fc', 2:'#f87171', 3:'#38bdf8', 4:'#888780', 5:'#fb923c' };
 
     return `<div class="set-day-row ${isTarget ? 'set-target' : ''}">
       <div class="set-day-badge" style="${isTarget ? '' : `color:${dayColors[d]}`}">${DAYS[d]}</div>
       <div class="set-day-info">
         <div class="set-day-name">${data.event}${isTarget ? ' ← 次の登校日' : ''}</div>
-        <div class="set-day-sub">${isCustom ? '✏️ カスタム設定中' : '自動計算'}</div>
+        <div class="set-day-sub">${statusLabel}</div>
       </div>
       <div class="set-wake-display ${isCustom ? '' : 'default'}" onclick="openModal(${d})">${fmtMin(displayWake)}</div>
     </div>`;
@@ -1473,9 +1484,15 @@ function updatePickerDisplay() {
   document.getElementById('pickM').textContent = String(_pickM).padStart(2,'0');
 }
 
-function confirmWakeTime() {
+function confirmWakeTime(mode) {
   if (_modalDay === null) return;
-  customWake[_modalDay] = _pickH * 60 + _pickM;
+  const val = _pickH * 60 + _pickM;
+  if (mode === 'repeat') {
+    persistWake[_modalDay] = val;
+    customWake[_modalDay] = null; // 今日のみをクリア
+  } else {
+    customWake[_modalDay] = val;
+  }
   closeModal();
   renderSet();
   _nowState = null; _nowCurIdx = -1;
@@ -1484,6 +1501,7 @@ function confirmWakeTime() {
 function resetWakeTime() {
   if (_modalDay === null) return;
   customWake[_modalDay] = null;
+  persistWake[_modalDay] = null;
   closeModal();
   renderSet();
   _nowState = null; _nowCurIdx = -1;
@@ -1760,20 +1778,20 @@ function renderEdit() {
   }).join('');
 
   const taskRows = tasks.map((t, i) => {
-    const isFixed = t.fixed;
+    const isFirst = i === 0;
+    const isLast = i === tasks.length - 1;
     return `<div class="edit-task-row">
+      <div style="display:flex;flex-direction:column;gap:2px;margin-right:2px;">
+        <button class="edit-min-btn" style="height:22px;font-size:11px;" onclick="editMoveTask(${i},-1)" ${isFirst ? 'disabled style="opacity:0.2;height:22px;font-size:11px;"' : ''}>▲</button>
+        <button class="edit-min-btn" style="height:22px;font-size:11px;" onclick="editMoveTask(${i},1)" ${isLast ? 'disabled style="opacity:0.2;height:22px;font-size:11px;"' : ''}>▼</button>
+      </div>
       <div class="edit-task-dot" style="background:${t.color}"></div>
       <div class="edit-task-name">${t.name}</div>
       <div class="edit-task-controls">
-        ${!isFixed ? `
-          <button class="edit-min-btn" onclick="editChangeMin(${i}, -5)">－</button>
-          <div class="edit-min-val">${t.min}分</div>
-          <button class="edit-min-btn" onclick="editChangeMin(${i}, 5)">＋</button>
-          <button class="edit-del-btn" onclick="editDeleteTask(${i})">✕</button>
-        ` : `
-          <div class="edit-min-val">${t.min}分</div>
-          <span class="edit-fixed-badge">固定</span>
-        `}
+        <button class="edit-min-btn" onclick="editChangeMin(${i}, -5)">－</button>
+        <div class="edit-min-val">${t.min}分</div>
+        <button class="edit-min-btn" onclick="editChangeMin(${i}, 5)">＋</button>
+        ${!t.fixed ? `<button class="edit-del-btn" onclick="editDeleteTask(${i})">✕</button>` : `<span class="edit-fixed-badge">固定</span>`}
       </div>
     </div>`;
   }).join('');
@@ -1822,6 +1840,17 @@ function ensureCustomTasks(dow) {
     // デフォルトのディープコピーを作成
     customTasks[dow] = getDefaultTasks(bathOn, schedule[dow]).map(t => ({...t}));
   }
+}
+
+function editMoveTask(idx, dir) {
+  ensureCustomTasks(editDay);
+  const tasks = customTasks[editDay];
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= tasks.length) return;
+  [tasks[idx], tasks[newIdx]] = [tasks[newIdx], tasks[idx]];
+  recalcWakeFromTasks(editDay);
+  _nowState = null; _nowCurIdx = -1;
+  renderEdit();
 }
 
 function editChangeMin(idx, delta) {
@@ -1932,7 +1961,6 @@ function renderMain() {
   const alarmUrl = `shortcuts://run-shortcut?name=${encodeURIComponent('アラームセット')}&input=${encodeURIComponent(alarmTime)}`;
 
   content.innerHTML = `
-    ${noticeHtml}
     ${getWeatherHtml()}
 
     <div class="cards-row animate-in">
@@ -2030,7 +2058,8 @@ setInterval(() => {
   if (now.getDate() !== _lastDate) {
     const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayDow = yesterday.getDay(); // 0=日〜6=土
+    const yesterdayDow = yesterday.getDay();
+    // 「今日のみ」設定だけリセット。「繰り返し」は維持。
     if (customWake[yesterdayDow] !== undefined) {
       customWake[yesterdayDow] = null;
     }
