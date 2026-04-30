@@ -608,6 +608,90 @@
     color: var(--accent-wake);
   }
 
+  /* ===== EDIT TAB ===== */
+  .edit-section { margin-bottom: 16px; }
+  .edit-section-title {
+    font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--muted); font-family: var(--font-mono); margin-bottom: 10px;
+  }
+  .edit-task-list { display: flex; flex-direction: column; gap: 6px; }
+  .edit-task-row {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 12px 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .edit-task-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .edit-task-name { flex: 1; font-size: 13px; font-weight: 500; }
+  .edit-task-controls { display: flex; align-items: center; gap: 6px; }
+  .edit-min-btn {
+    width: 28px; height: 28px; border-radius: 8px;
+    border: 1px solid var(--border); background: rgba(255,255,255,0.04);
+    color: var(--text); font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.12s;
+  }
+  .edit-min-btn:active { background: rgba(255,255,255,0.12); }
+  .edit-min-val {
+    font-family: var(--font-mono); font-size: 13px; min-width: 32px;
+    text-align: center; color: var(--text);
+  }
+  .edit-del-btn {
+    width: 28px; height: 28px; border-radius: 8px;
+    border: 1px solid rgba(248,113,113,0.2); background: rgba(248,113,113,0.07);
+    color: #f87171; font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; margin-left: 4px;
+    transition: background 0.12s;
+  }
+  .edit-del-btn:active { background: rgba(248,113,113,0.2); }
+  .edit-fixed-badge {
+    font-size: 9px; padding: 2px 6px; border-radius: 4px;
+    background: rgba(255,255,255,0.05); color: var(--muted);
+    margin-left: 4px; flex-shrink: 0;
+  }
+  .edit-add-row {
+    display: flex; gap: 8px; margin-top: 8px;
+  }
+  .edit-add-input {
+    flex: 1; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 11px 14px; color: var(--text);
+    font-family: var(--font-sans); font-size: 13px; outline: none;
+    transition: border-color 0.15s;
+  }
+  .edit-add-input:focus { border-color: rgba(192,132,252,0.4); }
+  .edit-add-input::placeholder { color: var(--muted); }
+  .edit-add-btn {
+    padding: 11px 16px; border-radius: 12px; border: none;
+    background: rgba(192,132,252,0.15); color: var(--accent-wake);
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    font-family: var(--font-sans); white-space: nowrap;
+    transition: background 0.12s;
+  }
+  .edit-add-btn:active { background: rgba(192,132,252,0.28); }
+  .edit-day-tabs {
+    display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto;
+    padding-bottom: 2px;
+  }
+  .edit-day-tab {
+    flex-shrink: 0; padding: 7px 14px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--muted); font-size: 12px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s; font-family: var(--font-sans);
+  }
+  .edit-day-tab.active {
+    border-color: rgba(192,132,252,0.4); color: var(--accent-wake);
+    background: rgba(192,132,252,0.07);
+  }
+  .edit-wake-preview {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px 16px; margin-bottom: 14px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .edit-wake-label { font-size: 12px; color: var(--muted); }
+  .edit-wake-val {
+    font-family: var(--font-mono); font-size: 20px; font-weight: 500;
+    color: var(--accent-wake);
+  }
+
   /* NOW: current task hero */
   .now-hero {
     background: var(--surface);
@@ -869,6 +953,88 @@
     font-size: 11px;
     color: var(--muted);
   }
+  /* ===== EDIT TAB ===== */
+  .edit-day-tabs {
+    display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .edit-day-tabs::-webkit-scrollbar { display: none; }
+  .edit-day-tab {
+    flex-shrink: 0; padding: 7px 14px;
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--surface); color: var(--muted);
+    font-size: 13px; cursor: pointer; transition: all 0.15s;
+    font-family: var(--font-sans);
+  }
+  .edit-day-tab.active { border-color: var(--accent-wake); color: var(--accent-wake); background: rgba(192,132,252,0.07); }
+
+  .edit-task-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+  .edit-task-row {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 12px 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .edit-task-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .edit-task-name { flex: 1; font-size: 13px; font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .edit-task-mins {
+    display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+  }
+  .edit-mins-btn {
+    width: 28px; height: 28px; border-radius: 8px;
+    border: 1px solid var(--border); background: rgba(255,255,255,0.04);
+    color: var(--text); font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.12s; flex-shrink: 0;
+  }
+  .edit-mins-btn:active { background: rgba(255,255,255,0.12); }
+  .edit-mins-val {
+    font-family: var(--font-mono); font-size: 13px;
+    min-width: 32px; text-align: center;
+  }
+  .edit-task-del {
+    width: 28px; height: 28px; border-radius: 8px;
+    border: 1px solid rgba(248,113,113,0.2); background: rgba(248,113,113,0.07);
+    color: #f87171; font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: background 0.12s;
+  }
+  .edit-task-del:active { background: rgba(248,113,113,0.2); }
+
+  .edit-add-row {
+    display: flex; gap: 8px; margin-bottom: 14px;
+  }
+  .edit-add-input {
+    flex: 1; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 11px 14px; color: var(--text);
+    font-size: 13px; font-family: var(--font-sans); outline: none;
+    transition: border-color 0.15s;
+  }
+  .edit-add-input:focus { border-color: rgba(192,132,252,0.4); }
+  .edit-add-input::placeholder { color: var(--muted); }
+  .edit-add-btn {
+    padding: 11px 16px; border-radius: 12px;
+    background: rgba(192,132,252,0.15); border: 1px solid rgba(192,132,252,0.3);
+    color: var(--accent-wake); font-size: 13px; font-weight: 700;
+    cursor: pointer; flex-shrink: 0; transition: opacity 0.15s;
+    font-family: var(--font-sans);
+  }
+  .edit-add-btn:active { opacity: 0.7; }
+
+  .edit-info-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px 16px; margin-bottom: 14px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .edit-info-label { font-size: 12px; color: var(--muted); }
+  .edit-info-value { font-family: var(--font-mono); font-size: 18px; font-weight: 500; color: var(--accent-wake); }
+
+  .edit-reset-btn {
+    width: 100%; padding: 13px; border-radius: 14px;
+    background: rgba(251,146,60,0.08); border: 1px solid rgba(251,146,60,0.2);
+    color: var(--accent-warn); font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: var(--font-sans); transition: opacity 0.15s;
+  }
+  .edit-reset-btn:active { opacity: 0.7; }
 </style>
 </head>
 <body>
@@ -889,6 +1055,7 @@
     <button class="view-tab" id="tabNow" onclick="switchView('now')">⏱ いまここ</button>
     <button class="view-tab active" id="tabDay" onclick="switchView('day')">📅 曜日別</button>
     <button class="view-tab" id="tabSet" onclick="switchView('set')">⏰ 設定</button>
+    <button class="view-tab" id="tabEdit" onclick="switchView('edit')">✏️ 編集</button>
   </div>
 
   <!-- Day nav (曜日別のみ表示) -->
@@ -1049,8 +1216,55 @@ let bathOn = false;
 let currentView = 'day'; // 'day' | 'now' | 'set'
 
 // 曜日ごとのカスタム起床時間 (分単位, nullなら自動)
-// localStorageが使えない環境向けにメモリのみで保持
 const customWake = { 1: null, 2: null, 3: null, 4: null, 5: null };
+
+// ===== カスタムタスク =====
+// 曜日ごとに追加タスクを保持 { name, min, color }
+const TASK_COLORS = ['#f9a8d4','#fdba74','#fde68a','#bbf7d0','#a5f3fc','#c4b5fd','#fca5a5'];
+let _colorIdx = 0;
+function nextColor() { return TASK_COLORS[_colorIdx++ % TASK_COLORS.length]; }
+
+// デフォルトタスク（固定・削除不可）を曜日データから生成
+function getDefaultTasks(hasBath, dayData) {
+  const tasks = [];
+  tasks.push({ id: 'meal', name: '朝ごはん', min: 10, color: '#4ade80', fixed: true });
+  if (dayData.bentMin > 0) tasks.push({ id: 'bento', name: 'お弁当の準備', min: dayData.bentMin, color: '#6ee7b7', fixed: false });
+  if (hasBath) {
+    tasks.push({ id: 'bath', name: 'お風呂', min: 15, color: '#38bdf8', fixed: false });
+    tasks.push({ id: 'hair', name: '髪を乾かす・セット', min: 10, color: '#7dd3fc', fixed: false });
+    tasks.push({ id: 'dress', name: '服を選ぶ・着る', min: 5, color: '#a5b4fc', fixed: false });
+  } else {
+    tasks.push({ id: 'dress', name: '服を選ぶ・着る', min: 5, color: '#a5b4fc', fixed: false });
+    tasks.push({ id: 'groom', name: '身だしなみ・髪セット', min: 10, color: '#7dd3fc', fixed: false });
+  }
+  tasks.push({ id: 'bag', name: '荷物をまとめる', min: 5, color: '#fcd34d', fixed: false });
+  tasks.push({ id: 'buffer', name: '余裕', min: dayData.bufferMin, color: '#334155', fixed: true });
+  return tasks;
+}
+
+// 曜日ごとのカスタムタスク上書き { dow: [{id,name,min,color,fixed}] | null }
+const customTasks = { 1: null, 2: null, 3: null, 4: null, 5: null };
+
+// 実際に使うタスクを取得（customTasksがあればそれ、なければデフォルト）
+function getTasks(hasBath, dayData) {
+  const dow = Object.keys(schedule).find(k => schedule[k] === dayData);
+  if (dow && customTasks[dow]) return customTasks[dow];
+  return getDefaultTasks(hasBath, dayData);
+}
+
+// カスタム起床時間を起床に反映（タスク合計から逆算）
+function recalcWakeFromTasks(dow) {
+  const data = schedule[dow];
+  const tasks = getTasks(bathOn, data);
+  const totalMin = tasks.reduce((s,t) => s + t.min, 0);
+  if (!data.depart) return; // 木曜は出発なし
+  const computed = data.depart - totalMin; // タスクから逆算した起床時間
+  const LATEST_WAKE = 8 * 60 + 30; // 遅くとも8:30
+  // computedが8:30より遅い（余裕がある）場合は8:30に固定
+  // computedが8:30より早い（間に合わない）場合はそちらを優先
+  data.wakeNoBath = Math.min(LATEST_WAKE, computed);
+  data.wakeBath = Math.min(LATEST_WAKE, computed) - 25;
+}
 
 // モーダル用一時状態
 let _modalDay = null;
@@ -1059,7 +1273,9 @@ let _pickH = 7, _pickM = 0;
 function getWake(dow, hasBath) {
   if (customWake[dow] !== null) return customWake[dow];
   const data = schedule[dow];
-  return hasBath ? data.wakeBath : data.wakeNoBath;
+  const raw = hasBath ? data.wakeBath : data.wakeNoBath;
+  const MIN_WAKE = 8 * 60 + 30;
+  return Math.max(MIN_WAKE, raw);
 }
 
 function switchView(v) {
@@ -1067,8 +1283,9 @@ function switchView(v) {
   document.getElementById('tabNow').classList.toggle('active', v === 'now');
   document.getElementById('tabDay').classList.toggle('active', v === 'day');
   document.getElementById('tabSet').classList.toggle('active', v === 'set');
+  document.getElementById('tabEdit').classList.toggle('active', v === 'edit');
   document.getElementById('dayNav').style.display = v === 'day' ? 'flex' : 'none';
-  _nowState = null; _nowCurIdx = -1; // nowタブの再構築フラグリセット
+  _nowState = null; _nowCurIdx = -1;
   render();
 }
 
@@ -1077,6 +1294,8 @@ function render() {
     renderNow();
   } else if (currentView === 'set') {
     renderSet();
+  } else if (currentView === 'edit') {
+    renderEdit();
   } else {
     renderDayNav();
     renderMain();
@@ -1384,6 +1603,7 @@ function renderNow() {
 function buildNowDOM(content, d) {
   if (d.state === 'holiday') {
     content.innerHTML = `
+      ${getWeatherHtml()}
       <div class="now-state-card animate-in">
         <div class="now-state-icon">🌿</div>
         <div class="now-state-title">今日は休日</div>
@@ -1394,6 +1614,7 @@ function buildNowDOM(content, d) {
 
   if (d.state === 'before') {
     content.innerHTML = `
+      ${getWeatherHtml()}
       <div class="now-state-card animate-in">
         <div class="now-state-icon">😴</div>
         <div class="now-state-title">まだ起床前</div>
@@ -1414,6 +1635,7 @@ function buildNowDOM(content, d) {
 
   if (d.state === 'done') {
     content.innerHTML = `
+      ${getWeatherHtml()}
       <div class="now-state-card animate-in">
         <div class="now-state-icon">✅</div>
         <div class="now-state-title">準備完了！</div>
@@ -1513,6 +1735,141 @@ function buildNowDOM(content, d) {
       <div class="toggle-switch"></div>
     </div>
   `;
+}
+
+// ===== EDIT TAB =====
+let editDay = 1; // 編集中の曜日
+
+function renderEdit() {
+  const content = document.getElementById('mainContent');
+  const now = new Date();
+  document.getElementById('dateLabel').textContent = `${now.getFullYear()}年${now.getMonth()+1}月`;
+  document.getElementById('dayDisplay').textContent = 'タスクの編集';
+
+  const data = schedule[editDay];
+  const tasks = getTasks(bathOn, data);
+  const totalMin = tasks.reduce((s,t) => s + t.min, 0);
+  const wake = getWake(editDay, bathOn);
+  const wakeStr = fmtMin(wake);
+
+  const dayTabs = [1,2,3,4,5].map(d => {
+    const hasCustom = customTasks[d] !== null;
+    return `<button class="edit-day-tab ${d === editDay ? 'active' : ''}" onclick="editSwitchDay(${d})">
+      ${DAYS[d]}${hasCustom ? ' ✏️' : ''}
+    </button>`;
+  }).join('');
+
+  const taskRows = tasks.map((t, i) => {
+    const isFixed = t.fixed;
+    return `<div class="edit-task-row">
+      <div class="edit-task-dot" style="background:${t.color}"></div>
+      <div class="edit-task-name">${t.name}</div>
+      <div class="edit-task-controls">
+        ${!isFixed ? `
+          <button class="edit-min-btn" onclick="editChangeMin(${i}, -5)">－</button>
+          <div class="edit-min-val">${t.min}分</div>
+          <button class="edit-min-btn" onclick="editChangeMin(${i}, 5)">＋</button>
+          <button class="edit-del-btn" onclick="editDeleteTask(${i})">✕</button>
+        ` : `
+          <div class="edit-min-val">${t.min}分</div>
+          <span class="edit-fixed-badge">固定</span>
+        `}
+      </div>
+    </div>`;
+  }).join('');
+
+  content.innerHTML = `
+    <div class="edit-section animate-in">
+      <div class="edit-section-title">編集する曜日</div>
+      <div class="edit-day-tabs">${dayTabs}</div>
+    </div>
+
+    <div class="edit-wake-preview animate-in">
+      <div>
+        <div class="edit-wake-label">この設定での起床時間</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">合計 ${totalMin}分</div>
+      </div>
+      <div class="edit-wake-val">${wakeStr}</div>
+    </div>
+
+    <div class="edit-section animate-in">
+      <div class="edit-section-title">タスク一覧（－／＋で時間変更）</div>
+      <div class="edit-task-list">${taskRows}</div>
+    </div>
+
+    <div class="edit-section animate-in">
+      <div class="edit-section-title">タスクを追加</div>
+      <div class="edit-add-row">
+        <input class="edit-add-input" id="editNewName" type="text" placeholder="タスク名を入力" maxlength="20">
+        <button class="edit-add-btn" onclick="editAddTask()">追加</button>
+      </div>
+    </div>
+
+    ${customTasks[editDay] !== null ? `
+    <button onclick="editResetDay()" style="width:100%;padding:13px;border-radius:14px;border:1px solid rgba(251,146,60,0.25);background:rgba(251,146,60,0.07);color:var(--accent-warn);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-sans);margin-top:4px;">
+      🔄 ${DAYS[editDay]}曜日をデフォルトに戻す
+    </button>` : ''}
+  `;
+}
+
+function editSwitchDay(d) {
+  editDay = d;
+  renderEdit();
+}
+
+function ensureCustomTasks(dow) {
+  if (!customTasks[dow]) {
+    // デフォルトのディープコピーを作成
+    customTasks[dow] = getDefaultTasks(bathOn, schedule[dow]).map(t => ({...t}));
+  }
+}
+
+function editChangeMin(idx, delta) {
+  ensureCustomTasks(editDay);
+  const tasks = customTasks[editDay];
+  const t = tasks[idx];
+  if (t.fixed) return;
+  t.min = Math.max(5, t.min + delta);
+  recalcWakeFromTasks(editDay);
+  _nowState = null; _nowCurIdx = -1;
+  renderEdit();
+}
+
+function editDeleteTask(idx) {
+  ensureCustomTasks(editDay);
+  const tasks = customTasks[editDay];
+  if (tasks[idx].fixed) return;
+  tasks.splice(idx, 1);
+  recalcWakeFromTasks(editDay);
+  _nowState = null; _nowCurIdx = -1;
+  renderEdit();
+}
+
+function editAddTask() {
+  const input = document.getElementById('editNewName');
+  const name = input.value.trim();
+  if (!name) return;
+  ensureCustomTasks(editDay);
+  const tasks = customTasks[editDay];
+  // 「余裕」の直前に挿入
+  const bufferIdx = tasks.findIndex(t => t.id === 'buffer');
+  const newTask = { id: 'custom_' + Date.now(), name, min: 10, color: nextColor(), fixed: false };
+  if (bufferIdx >= 0) {
+    tasks.splice(bufferIdx, 0, newTask);
+  } else {
+    tasks.push(newTask);
+  }
+  recalcWakeFromTasks(editDay);
+  _nowState = null; _nowCurIdx = -1;
+  input.value = '';
+  renderEdit();
+}
+
+function editResetDay() {
+  customTasks[editDay] = null;
+  recalcWakeFromTasks(editDay);
+  _nowState = null; _nowCurIdx = -1;
+  renderEdit();
 }
 
 function renderDayNav() {
@@ -1657,6 +2014,7 @@ currentView = 'now';
 document.getElementById('tabNow').classList.add('active');
 document.getElementById('tabDay').classList.remove('active');
 document.getElementById('tabSet').classList.remove('active');
+document.getElementById('tabEdit').classList.remove('active');
 document.getElementById('dayNav').style.display = 'none';
 render();
 
