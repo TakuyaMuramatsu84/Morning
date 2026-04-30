@@ -1118,42 +1118,42 @@ const DAYS = ['日','月','火','水','木','金','土'];
 // 金: 弁当5, 余裕5 / なし=30→depart7:30→wake7:00 / あり=45→wake6:45 (depart 7:30, bus 7:45)
 
 const schedule = {
-  1: { // 月
+  1: { // 月: depart=12:44(764), タスク計50分 → 764-50=714=11:54 → 8:30ルール
     wakeNoBath: 8*60+30, wakeBath: 8*60+30,
     depart: 12*60+44, event: '13:00 授業',
     rule830Both: true,
     bentMin: 10, bufferMin: 10,
-    note: '余裕たっぷり。朝の時間を有効活用しよう。'
+    note: null
   },
-  2: { // 火
-    wakeNoBath: 7*60+54, wakeBath: 7*60+39,
+  2: { // 火: depart=8:34(514), 風呂なしタスク計50分 → 514-50=464=7:44 / 風呂あり75分 → 514-75=439=7:19
+    wakeNoBath: 7*60+44, wakeBath: 7*60+19,
     depart: 8*60+34, event: '8:50 授業',
     rule830Both: false,
     bentMin: 10, bufferMin: 10,
-    note: '月曜に入浴済みなら風呂なしで7:54起き。'
+    note: null
   },
-  3: { // 水
+  3: { // 水: depart=10:14(614), タスク計50分 → 614-50=564=9:24 → 8:30ルール
     wakeNoBath: 8*60+30, wakeBath: 8*60+30,
     depart: 10*60+14, event: '10:30 授業',
     rule830Both: true,
     bentMin: 10, bufferMin: 10,
     note: null
   },
-  4: { // 木
+  4: { // 木: 授業なし → 8:30固定
     wakeNoBath: 8*60+30, wakeBath: 8*60+30,
     depart: null, event: '授業なし',
     rule830Both: true,
     bentMin: 0, bufferMin: 10,
     noSchool: true,
-    note: '金曜に備えて今夜はお風呂に入ろう。'
+    note: null
   },
-  5: { // 金
-    wakeNoBath: 7*60+0, wakeBath: 6*60+45,
+  5: { // 金: depart=7:30(450), 風呂なしタスク計40分 → 450-40=410=6:50 / 風呂あり55分 → 450-55=395=6:35
+    wakeNoBath: 6*60+50, wakeBath: 6*60+35,
     depart: 7*60+30, event: '7:45 バス',
     rule830Both: false,
     bentMin: 5, bufferMin: 5,
     isBus: true,
-    note: '木曜に入浴済みなら風呂なしで7:00起き。バスは乗り遅れ厳禁！出発7:30厳守。'
+    note: null
   }
 };
 
@@ -1264,15 +1264,33 @@ function getTasks(hasBath, dayData) {
 // カスタム起床時間を起床に反映（タスク合計から逆算）
 function recalcWakeFromTasks(dow) {
   const data = schedule[dow];
-  const tasks = getTasks(bathOn, data);
-  const totalMin = tasks.reduce((s,t) => s + t.min, 0);
   if (!data.depart) return; // 木曜は出発なし
-  const computed = data.depart - totalMin; // タスクから逆算した起床時間
-  const LATEST_WAKE = 8 * 60 + 30; // 遅くとも8:30
-  // computedが8:30より遅い（余裕がある）場合は8:30に固定
-  // computedが8:30より早い（間に合わない）場合はそちらを優先
-  data.wakeNoBath = Math.min(LATEST_WAKE, computed);
-  data.wakeBath = Math.min(LATEST_WAKE, computed) - 25;
+
+  // customTasksがあればそれを、なければデフォルト(風呂なし)を使う
+  let baseTasks;
+  if (customTasks[dow]) {
+    baseTasks = customTasks[dow];
+  } else {
+    baseTasks = getDefaultTasks(false, data);
+  }
+
+  // 風呂タスク(お風呂+髪)が含まれているか確認
+  const hasBathTask = baseTasks.some(t => t.id === 'bath' || t.id === 'hair');
+  const totalBase = baseTasks.reduce((s,t) => s + t.min, 0);
+
+  const LATEST_WAKE = 8 * 60 + 30;
+
+  if (hasBathTask) {
+    // 風呂タスクが含まれている → 風呂ありの起床時間のみ更新
+    data.wakeBath   = Math.min(LATEST_WAKE, data.depart - totalBase);
+    // 風呂なしは風呂タスク分(25分)を引いて計算
+    data.wakeNoBath = Math.min(LATEST_WAKE, data.depart - (totalBase - 25));
+  } else {
+    // 風呂タスクなし → 風呂なしの起床時間を更新
+    data.wakeNoBath = Math.min(LATEST_WAKE, data.depart - totalBase);
+    // 風呂ありは25分追加
+    data.wakeBath   = Math.min(LATEST_WAKE, data.depart - (totalBase + 25));
+  }
 }
 
 // モーダル用一時状態
@@ -1283,9 +1301,7 @@ function getWake(dow, hasBath) {
   if (customWake[dow] !== null) return customWake[dow];   // 今日のみ
   if (persistWake[dow] !== null) return persistWake[dow]; // 繰り返し
   const data = schedule[dow];
-  const raw = hasBath ? data.wakeBath : data.wakeNoBath;
-  const MIN_WAKE = 8 * 60 + 30;
-  return Math.max(MIN_WAKE, raw);
+  return hasBath ? data.wakeBath : data.wakeNoBath;
 }
 
 function switchView(v) {
@@ -1452,7 +1468,7 @@ function openModal(dow) {
   _modalDay = dow;
   const data = schedule[dow];
   const cur = customWake[dow];
-  const base = cur !== null ? cur : (bathOn ? data.wakeNoBath : data.wakeNoBath);
+  const base = cur !== null ? cur : (bathOn ? data.wakeBath : data.wakeNoBath);
   _pickH = Math.floor(base / 60);
   _pickM = base % 60;
   updatePickerDisplay();
